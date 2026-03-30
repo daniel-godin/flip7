@@ -9,3 +9,10 @@
 
     padding: 2rem 1rem;
 }
+
+.gameOptionsForm {
+    display: flex;
+    flex-direction: column;
+
+    gap: 0.5rem;
+}
