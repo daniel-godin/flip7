@@ -4,10 +4,13 @@ import type { GameConfig, Player } from "../types/types";
 import { shuffle } from "../utilities/shuffle";
 
 const NUMBER_OF_ROUNDS = 100_000;
+const NUMBER_OF_GAMES = 1;
 
 const gameConfig: GameConfig = {
+    deck: NUMBERS_ONLY_DECK,
+    // hardStayAt: 4,  // For simulations that want a hard stay for every player
     players: 5,
-    deck: NUMBERS_ONLY_DECK
+    winAt: 200
 }
 
 export function game() {
@@ -25,7 +28,8 @@ export function game() {
             flip7wins: 0,
             name: `Player ${i + 1}`,
             score: 0,
-            turnComplete: false
+            turnComplete: false,
+            wins: 0
         })
     }
     
@@ -68,11 +72,13 @@ export function game() {
             players.forEach((player) => {
                 if (player.turnComplete) { return }; // If player busted, move to next player
 
-                if (player.cards.length === 3) {
+                // For simulations that want a hard stay for every player
+                if (gameConfig.hardStayAt && player.cards.length === gameConfig.hardStayAt) {
                     player.turnComplete = true;
                     player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
                     return;
                 }
+
 
                 // Step 1: if shuffledDeck is empty, make a new shuffledDeck from the discardPile
                 if (shuffledDeck.length === 0) {
@@ -102,6 +108,8 @@ export function game() {
                     if (player.cards.length === 7) {
                         player.flip7wins++;
                         player.turnComplete = true;
+                        player.score += sumArray(player.cards);
+                        player.score += 15; // 15 Bonus Points for Getting a Flip7
 
                         // Probably need to loop through players array and make all player turns complete, or exit out of while loop
                         for (let j = 0; j < players.length; j++) {
@@ -111,6 +119,28 @@ export function game() {
                     }
                 }  
             })
+        };
+
+        // Check for winners
+        if (players.some((player) => player.score >= 200)) {
+            let winnerIndex: number = 0;
+
+            for (let k = 0; k < players.length; k++) {
+                if (players[k].score >= 200) {
+                    // if (!winnerIndex) { winnerIndex = k; continue; };
+
+                    if (players[k].score > players[winnerIndex].score) {
+                        winnerIndex = k;
+                    } else if (players[k].score === players[winnerIndex].score) {
+                        // Figure out what to do if player tie
+                    }
+                }
+            }
+
+            // Update winner with an additional win
+            players[winnerIndex].wins++
+
+            players.forEach((player) => player.score = 0);
         }
 
         // Clean up after round:
@@ -131,6 +161,17 @@ export function game() {
     console.table(bustedCard);
 }
 
+function sumArray(arr: string[]): number {
+    const numArr: number[] = [];
+
+    arr.forEach((element) => {
+        if (isNaN(Number(element))) { return }; // If NaN after Number(), it is "+2", "+10", "FREEZE", etc.
+        numArr.push(Number(element));
+    })
+
+    return numArr.reduce((sum, card) => sum + Number(card), 0);
+}
+
 export function alwaysHitSimulation() {
     // Rule 1: Use shuffledDeck until it runs out, then shuffle discardPile and make that into the new shuffledDeck
     // Note: Does not include cards already in players hands.
@@ -146,7 +187,8 @@ export function alwaysHitSimulation() {
             flip7wins: 0,
             name: `Player ${i + 1}`,
             score: 0,
-            turnComplete: false
+            turnComplete: false,
+            wins: 0
         })
     }
     

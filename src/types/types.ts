@@ -1,8 +1,10 @@
 
 
 export interface GameConfig {
-    players: number; // Later possibly a Player Type
     deck: string[];
+    hardStayAt?: number;  // For simulations that want a hard stay for every player
+    players: number; // Later possibly a Player Type
+    winAt?: number // Total score that allows a player to win
 }
 
 export interface Player {
@@ -12,4 +14,5 @@ export interface Player {
     name: string;
     score: number;
     turnComplete: boolean;
+    wins: number;
 }
