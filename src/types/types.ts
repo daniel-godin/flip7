@@ -13,7 +13,3 @@ export interface Player {
     score: number;
     turnComplete: boolean;
 }
-
-export interface Results {
-
-}
