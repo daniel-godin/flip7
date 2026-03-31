@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import styles from './App.module.css';
 import { FULL_DECK, NUMBERS_ONLY_DECK } from './constants/deck';
-import { game } from './engine/game';
+import { game, runSimulation } from './engine/game';
 
 interface GameOptions {
     players: number;
@@ -37,9 +37,11 @@ export function App() {
         if (!gameOptions.players || !gameOptions.deck) { return }; // Silent Guard
 
         // Run the game
-        const gameResults = game(gameOptions.players, gameOptions.deck);
+        // const gameResults = game(gameOptions.players, gameOptions.deck);
 
-        console.log(gameResults);
+        runSimulation();
+
+
     }
 
     return (

@@ -3,8 +3,8 @@
 export interface GameConfig {
     deck: string[];
     hardStayAt?: number;  // For simulations that want a hard stay for every player
-    players: number; // Later possibly a Player Type
-    winAt?: number // Total score that allows a player to win
+    numberOfPlayers: number; // Later possibly a Player Type
+    winAt: number // Total score that allows a player to win
 }
 
 export interface Player {
