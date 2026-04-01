@@ -1,6 +1,6 @@
 
 import { NUMBERS_ONLY_DECK } from "../constants/deck";
-import type { BustByCardNumber, BustByHandSize, GameConfig, Player, Results } from "../types/types";
+import type { BustByCardNumber, BustByHandSize, BustResults, GameConfig, Player, Results } from "../types/types";
 import { shuffle } from "../utilities/shuffle";
 
 interface SimulationConfig {
@@ -18,9 +18,8 @@ const simulationConfig: SimulationConfig = {
     numberOfGames: 10_000,
 }
 
-
-
 export function runSimulation() {
+    const start = performance.now();
 
     const results: Results = {
         bustResults: {
@@ -98,10 +97,15 @@ export function runSimulation() {
     results.flip7Results.percentageChanceOverall = ((results.flip7Results.flip7wins / results.totalRounds) * 100).toFixed(2) + `%`;
     results.flip7Results.percentageChancePerPlayer = ((results.flip7Results.flip7wins / (results.totalRounds * simulationConfig.gameConfig.numberOfPlayers)) * 100).toFixed(2) + `%`;
 
+    console.log(`Number of games: `, simulationConfig.numberOfGames);
     console.table(results.playerResults);
     console.table(results.bustResults.bustByHandSize);
     console.table(results.bustResults.bustByCardNumber);
     console.table(results.flip7Results);
+
+    const end = performance.now();
+
+    console.log(`Time to Perform Simulation: ${end - start} milliseconds`)
 }
 
 export function game({ deck, hardStayAt, numberOfPlayers, winAt } : GameConfig) {
@@ -151,6 +155,8 @@ export function game({ deck, hardStayAt, numberOfPlayers, winAt } : GameConfig) 
         12: 0, 
     }
 
+    const bustResults = createBustObject();
+
     let roundsCounter: number = 0;
 
     // Game: Winning Condition:  Any player has gameConfig.winAt score or above at the end of a round.
@@ -186,6 +192,7 @@ export function game({ deck, hardStayAt, numberOfPlayers, winAt } : GameConfig) 
                 bustByHandSize[player.cards.length + 1].drawn++;
 
                 // Step 3: Determine if player has busted due to drawn card.
+                // if (player.cards.includes(nextCard)) {
                 if (player.cards.includes(nextCard)) {
                     player.busted = true;
                     player.turnComplete = true;
@@ -252,6 +259,37 @@ export function game({ deck, hardStayAt, numberOfPlayers, winAt } : GameConfig) 
         players,
         roundsCounter
     }
+}
+
+function createBustObject() {
+    const bustResults: BustResults = {
+        bustByCardNumber: {
+            0: 0, // Technically Impossible to Bust
+            1: 0, // Technically Impossible to Bust
+            2: 0, 
+            3: 0, 
+            4: 0, 
+            5: 0, 
+            6: 0, 
+            7: 0, 
+            8: 0, 
+            9: 0, 
+            10: 0, 
+            11: 0, 
+            12: 0, 
+        },
+        bustByHandSize: {
+            1: { drawn: 0, busts: 0 },
+            2: { drawn: 0, busts: 0 },
+            3: { drawn: 0, busts: 0 },
+            4: { drawn: 0, busts: 0 },
+            5: { drawn: 0, busts: 0 },
+            6: { drawn: 0, busts: 0 },
+            7: { drawn: 0, busts: 0 },
+        }
+    }
+
+    return bustResults;
 }
 
 function strategy (): 'hit' | 'stay' {
