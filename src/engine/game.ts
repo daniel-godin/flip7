@@ -15,25 +15,63 @@ const simulationConfig: SimulationConfig = {
         numberOfPlayers: 5, // Flip7 says up to 18 players *per deck*, so add a deck if there are more than 18 players.
         winAt: 200 // Default for Flip7 is 200
     },
-    numberOfGames: 1000,
+    numberOfGames: 10_000,
 }
 
+// ===== Bust Types =====
+type BustByCardNumber = Record<number, number>;
+
+interface BustByHandSizeEntry {
+    drawn: number;
+    busts: number;
+    percentage?: string;
+}
+
+type BustByHandSize = Record<number, BustByHandSizeEntry>;
+
+interface BustResults {
+    bustByCardNumber: BustByCardNumber;
+    bustByHandSize: BustByHandSize;
+}
+
+// ===== Flip7 Types =====
+interface Flip7Results {
+    flip7wins: number;
+    percentageChanceOverall: string;
+    percentageChancePerPlayer: string;
+}
+
+// ===== Player Types =====
 interface PlayerResult {
     flip7wins: number;
     name: string;
     wins: number;
 }
 
+// ===== Final Result Types =====
 interface Results {
+    bustResults: BustResults;
+    flip7Results: Flip7Results;
     numberOfGamesRan: number;
-    playerResults: Record<string, PlayerResult>
+    playerResults: Record<string, PlayerResult>;
+    totalRounds: number;
 }
 
 export function runSimulation() {
 
     const results: Results = {
+        bustResults: {
+            bustByCardNumber: {},
+            bustByHandSize: {}
+        },
+        flip7Results: { 
+            flip7wins: 0, 
+            percentageChanceOverall: '', 
+            percentageChancePerPlayer: '' 
+        },
         numberOfGamesRan: 0,
-        playerResults: {}
+        playerResults: {},
+        totalRounds: 0
     }
 
 
@@ -45,7 +83,33 @@ export function runSimulation() {
             winAt: simulationConfig.gameConfig.winAt
         });
 
+        // Add 1 to number of games ran
         results.numberOfGamesRan++;
+
+        // Add all rounds run per game into a total rounds run for all games.
+        results.totalRounds += gameResult.roundsCounter;
+
+        // Add bust results to results object
+        Object.entries(gameResult.bustByHandSize).forEach(([key, value]) => {
+            const numKey = Number(key);
+            if (!results.bustResults.bustByHandSize[numKey]) {
+                results.bustResults.bustByHandSize[numKey] = { drawn: value.drawn, busts: value.busts, percentage: ''};
+                return;
+            }
+
+            results.bustResults.bustByHandSize[numKey].drawn += value.drawn;
+            results.bustResults.bustByHandSize[numKey].busts += value.busts;
+        })
+
+        Object.entries(gameResult.bustByCardNumber).forEach(([key, value]) => {
+            const numKey = Number(key);
+            if (!results.bustResults.bustByCardNumber[numKey]) {
+                results.bustResults.bustByCardNumber[numKey] = value;
+                return;
+            }
+
+            results.bustResults.bustByCardNumber[numKey] += value;
+        })
 
         // Loop through gameResult.players and update results.playerResults object.
         gameResult.players.forEach((player) => {
@@ -55,10 +119,26 @@ export function runSimulation() {
             }
             results.playerResults[player.name].wins += player.wins;
             results.playerResults[player.name].flip7wins += player.flip7wins;
+
+            results.flip7Results.flip7wins += player.flip7wins;
         })
     }
 
+    // Do some math:
+    Object.entries(results.bustResults.bustByHandSize).forEach(([key, value]) => {
+        const numKey = Number(key);
+        const percentage = ((value.busts / value.drawn) * 100).toFixed(2);
+
+        results.bustResults.bustByHandSize[numKey].percentage = percentage;
+    });
+
+    results.flip7Results.percentageChanceOverall = ((results.flip7Results.flip7wins / results.totalRounds) * 100).toFixed(2) + `%`;
+    results.flip7Results.percentageChancePerPlayer = ((results.flip7Results.flip7wins / (results.totalRounds * simulationConfig.gameConfig.numberOfPlayers)) * 100).toFixed(2) + `%`;
+
     console.table(results.playerResults);
+    console.table(results.bustResults.bustByHandSize);
+    console.table(results.bustResults.bustByCardNumber);
+    console.table(results.flip7Results);
 }
 
 export function game({ deck, hardStayAt, numberOfPlayers, winAt } : GameConfig) {
@@ -79,21 +159,22 @@ export function game({ deck, hardStayAt, numberOfPlayers, winAt } : GameConfig) 
             wins: 0
         })
     }
-    
-    const bustedAt: Record<number, number> = {
-        // 0: 0,  // Technically Impossible to Bust
-        // 1: 0,  // Technically Impossible to Bust
-        2: 0,
-        3: 0,
-        4: 0,
-        5: 0,
-        6: 0,
-        7: 0,
-    };
 
-    const bustedCard: Record<number, number> = {
-        // 0: 0, // Technically Impossible to Bust
-        // 1: 0, // Technically Impossible to Bust
+    // I want to know overall how many busts per hand, but ALSO, how percentage of busting depending on which card
+    const bustByHandSize: BustByHandSize = {
+        1: { drawn: 0, busts: 0 },
+        2: { drawn: 0, busts: 0 },
+        3: { drawn: 0, busts: 0 },
+        4: { drawn: 0, busts: 0 },
+        5: { drawn: 0, busts: 0 },
+        6: { drawn: 0, busts: 0 },
+        7: { drawn: 0, busts: 0 },
+    }
+
+
+    const bustByCardNumber: BustByCardNumber = {
+        0: 0, // Technically Impossible to Bust
+        1: 0, // Technically Impossible to Bust
         2: 0, 
         3: 0, 
         4: 0, 
@@ -107,11 +188,17 @@ export function game({ deck, hardStayAt, numberOfPlayers, winAt } : GameConfig) 
         12: 0, 
     }
 
+    let roundsCounter: number = 0;
+
     // Game: Winning Condition:  Any player has gameConfig.winAt score or above at the end of a round.
     while (players.every((player) => player.score < winAt)) {
 
+        roundsCounter++;
+
         // Rounds:
         while (players.some((player) => player.turnComplete === false)) {
+
+
             // Loop through players:
             players.forEach((player) => {
                 if (player.turnComplete) { return }; // If player turnComplete (busted or staying), move to next player
@@ -133,14 +220,16 @@ export function game({ deck, hardStayAt, numberOfPlayers, winAt } : GameConfig) 
                 // Step 2: Draw the next card
                 const nextCard: string = shuffledDeck.shift()!;
 
+                bustByHandSize[player.cards.length + 1].drawn++;
+
                 // Step 3: Determine if player has busted due to drawn card.
                 if (player.cards.includes(nextCard)) {
                     player.busted = true;
                     player.turnComplete = true;
                     player.cards = [...player.cards, nextCard];
 
-                    bustedAt[player.cards.length]++;
-                    bustedCard[Number(nextCard)]++;
+                    bustByHandSize[player.cards.length].busts++;
+                    bustByCardNumber[Number(nextCard)]++;
 
                     return; // Next Player
                 } else {
@@ -195,12 +284,11 @@ export function game({ deck, hardStayAt, numberOfPlayers, winAt } : GameConfig) 
     players[winnerIndex].wins++
 
     return {
-        players
+        bustByCardNumber,
+        bustByHandSize,
+        players,
+        roundsCounter
     }
-
-    console.table(players);
-    console.table(bustedAt);
-    console.table(bustedCard);
 }
 
 function sumArray(arr: string[]): number {
