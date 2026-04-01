@@ -1,6 +1,6 @@
 
 import { NUMBERS_ONLY_DECK } from "../constants/deck";
-import type { BustByCardNumber, BustByHandSize, BustResults, GameConfig, Player, Results } from "../types/types";
+import type { BustResults, GameConfig, Player, Results } from "../types/types";
 import { shuffle } from "../utilities/shuffle";
 
 interface SimulationConfig {
@@ -52,7 +52,6 @@ export function runSimulation() {
         results.totalRounds += gameResult.roundsCounter;
 
         // Add bust results to results object
-        // Object.entries(gameResult.bustByHandSize).forEach(([key, value]) => {
         Object.entries(gameResult.bustResults.bustByHandSize).forEach(([key, value]) => {
             const numKey = Number(key);
             if (!results.bustResults.bustByHandSize[numKey]) {
@@ -64,7 +63,6 @@ export function runSimulation() {
             results.bustResults.bustByHandSize[numKey].busts += value.busts;
         })
 
-        // Object.entries(gameResult.bustByCardNumber).forEach(([key, value]) => {
         Object.entries(gameResult.bustResults.bustByCardNumber).forEach(([key, value]) => {
             const numKey = Number(key);
             if (!results.bustResults.bustByCardNumber[numKey]) {
@@ -130,34 +128,6 @@ export function game({ deck, hardStayAt, numberOfPlayers, winAt } : GameConfig) 
         })
     }
 
-    // I want to know overall how many busts per hand, but ALSO, how percentage of busting depending on which card
-    // const bustByHandSize: BustByHandSize = {
-    //     1: { drawn: 0, busts: 0 },
-    //     2: { drawn: 0, busts: 0 },
-    //     3: { drawn: 0, busts: 0 },
-    //     4: { drawn: 0, busts: 0 },
-    //     5: { drawn: 0, busts: 0 },
-    //     6: { drawn: 0, busts: 0 },
-    //     7: { drawn: 0, busts: 0 },
-    // }
-
-
-    // const bustByCardNumber: BustByCardNumber = {
-    //     0: 0, // Technically Impossible to Bust
-    //     1: 0, // Technically Impossible to Bust
-    //     2: 0, 
-    //     3: 0, 
-    //     4: 0, 
-    //     5: 0, 
-    //     6: 0, 
-    //     7: 0, 
-    //     8: 0, 
-    //     9: 0, 
-    //     10: 0, 
-    //     11: 0, 
-    //     12: 0, 
-    // }
-
     const bustResults = createBustObject();
 
     let roundsCounter: number = 0;
@@ -192,18 +162,13 @@ export function game({ deck, hardStayAt, numberOfPlayers, winAt } : GameConfig) 
                 // Step 2: Draw the next card
                 const nextCard: string = shuffledDeck.shift()!;
 
-                // bustByHandSize[player.cards.length + 1].drawn++;
                 bustResults.bustByHandSize[player.cards.length + 1].drawn++;
 
                 // Step 3: Determine if player has busted due to drawn card.
-                // if (player.cards.includes(nextCard)) {
                 if (player.cards.includes(nextCard)) {
                     player.busted = true;
                     player.turnComplete = true;
                     player.cards = [...player.cards, nextCard];
-
-                    // bustByHandSize[player.cards.length].busts++;
-                    // bustByCardNumber[Number(nextCard)]++;
 
                     bustResults.bustByHandSize[player.cards.length].busts++;
                     bustResults.bustByCardNumber[Number(nextCard)]++;
@@ -261,8 +226,6 @@ export function game({ deck, hardStayAt, numberOfPlayers, winAt } : GameConfig) 
     players[winnerIndex].wins++
 
     return {
-        // bustByCardNumber,
-        // bustByHandSize,
         bustResults,
         players,
         roundsCounter
