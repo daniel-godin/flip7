@@ -291,6 +291,22 @@ export function game({ deck, hardStayAt, numberOfPlayers, winAt } : GameConfig) 
     }
 }
 
+function strategy (): 'hit' | 'stay' {
+    let decision: 'hit' | 'stay';
+
+    return 'hit';
+    // What to pass into strategy?
+    // 1. Player Hand
+    // 2. All "Visible" Hands of other players
+    // 3. Player location the round, related to dealer
+    // 4. 
+
+
+
+    // Needs to return "hit" or "stay".
+    return decision;
+}
+
 function sumArray(arr: string[]): number {
     const numArr: number[] = [];
 
