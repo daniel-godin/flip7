@@ -1,6 +1,6 @@
 
 import { NUMBERS_ONLY_DECK } from "../constants/deck";
-import type { GameConfig, Player } from "../types/types";
+import type { BustByCardNumber, BustByHandSize, GameConfig, Player, Results } from "../types/types";
 import { shuffle } from "../utilities/shuffle";
 
 interface SimulationConfig {
@@ -18,44 +18,7 @@ const simulationConfig: SimulationConfig = {
     numberOfGames: 10_000,
 }
 
-// ===== Bust Types =====
-type BustByCardNumber = Record<number, number>;
 
-interface BustByHandSizeEntry {
-    drawn: number;
-    busts: number;
-    percentage?: string;
-}
-
-type BustByHandSize = Record<number, BustByHandSizeEntry>;
-
-interface BustResults {
-    bustByCardNumber: BustByCardNumber;
-    bustByHandSize: BustByHandSize;
-}
-
-// ===== Flip7 Types =====
-interface Flip7Results {
-    flip7wins: number;
-    percentageChanceOverall: string;
-    percentageChancePerPlayer: string;
-}
-
-// ===== Player Types =====
-interface PlayerResult {
-    flip7wins: number;
-    name: string;
-    wins: number;
-}
-
-// ===== Final Result Types =====
-interface Results {
-    bustResults: BustResults;
-    flip7Results: Flip7Results;
-    numberOfGamesRan: number;
-    playerResults: Record<string, PlayerResult>;
-    totalRounds: number;
-}
 
 export function runSimulation() {
 
