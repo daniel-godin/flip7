@@ -17,7 +17,7 @@ const simulationConfig: SimulationConfig = {
         numberOfPlayers: 5, // Flip7 says up to 18 players *per deck*, so add a deck if there are more than 18 players.
         winAt: 200 // Default for Flip7 is 200
     },
-    numberOfGames: 1000
+    numberOfGames: 10_000
 }
 
 export function runSimulation() {
@@ -134,17 +134,10 @@ export function game({ deck, numberOfPlayers, winAt } : GameConfig) {
                 // Reshuffle Deck From Discard Pile if Deck is Empty.  Then clear Discard Pile.
                 if (shuffledDeck.length === 0) { shuffledDeck = shuffle([...discardPile]); discardPile.length = 0 };
                     
-        
-
-                // This is where strategy comes in.
-
-                // What decisions does a player need to make?  (Hit or Stay)
-                // What data do they have available to them to make this decision?  (Their Hand, Other's Hands, Discard Pile, Stastistical Knowledge)
-
-                // How can I pull this out into a "strategy" or "decision" function?
-
+                // playerDecision is either "hit" or "stay" *before* drawing a card.
                 const playerDecision = strategy({ 
-                    hand: player.cards, 
+                    // hand: player.cards, 
+                    player: player,
                     otherHands: players.filter((p) => p.name !== player.name).map((pl) => pl.cards),
                     discardPile: discardPile,
                     position: players.findIndex((p) => p.name === player.name)
@@ -153,7 +146,7 @@ export function game({ deck, numberOfPlayers, winAt } : GameConfig) {
                 switch (playerDecision) {
                     case 'stay': 
                         player.turnComplete = true;
-                        player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
+                        player.score += sumArray(player.cards);
                         return;
                         break;
                     case 'hit':
@@ -193,57 +186,6 @@ export function game({ deck, numberOfPlayers, winAt } : GameConfig) {
                         };
                         break; 
                 }
-
-
-
-
-
-                // For simulations that want a hard stay for every player
-                // if (hardStayAt && player.cards.length === hardStayAt) {
-                //     player.turnComplete = true;
-                //     player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
-                //     return;
-                // }
-
-                
-
-
-
-
-                // // Step 2: Draw the next card
-                // const nextCard: string = shuffledDeck.shift()!;
-
-                // bustResults.bustByHandSize[player.cards.length + 1].drawn++;
-
-                // // Step 3: Determine if player has busted due to drawn card.
-                // if (player.cards.includes(nextCard)) {
-                //     player.busted = true;
-                //     player.turnComplete = true;
-                //     player.cards = [...player.cards, nextCard];
-
-                //     bustResults.bustByHandSize[player.cards.length].busts++;
-                //     bustResults.bustByCardNumber[Number(nextCard)]++;
-
-                //     return; // Next Player
-                // } else {
-                //     // Flip7 has special rules regarding number of cards
-                //     // If the user flips 7 cards without busting, they get a bonus and the round ends.
-                //     // So, we don't need to go over 7 cards.
-                //     player.cards.push(nextCard);
-
-                //     if (player.cards.length === 7) {
-                //         player.flip7wins++;
-                //         player.turnComplete = true;
-                //         player.score += sumArray(player.cards);
-                //         player.score += 15; // 15 Bonus Points for Getting a Flip7
-
-                //         // Probably need to loop through players array and make all player turns complete, or exit out of while loop
-                //         for (let j = 0; j < players.length; j++) {
-                //             players[j].turnComplete = true;
-                //         }
-                        
-                //     }
-                // }  
             })
         };
 
@@ -285,16 +227,19 @@ export function game({ deck, numberOfPlayers, winAt } : GameConfig) {
 
 interface StrategyConfig {
     allAlwaysHit: boolean; // Default should be false
-    allStayOnNumber?: number; // optional
+    allStayOnNumber?: number; // optional -- if hand.length === to this, stay.
+    allStayOnTotal?: number; // *optional* -- if hand is >= this number, stay.
 }
 
 const strategyConfig: StrategyConfig = {
-    allAlwaysHit: true,
-    // allHitOnNumber: 4
+    allAlwaysHit: false,
+    // allStayOnNumber: 4,
+    allStayOnTotal: 30
 }
 
 interface StrategyInput {
     hand: string[];
+    playerName: string;
     otherHands: string[][];
     discardPile: string[];
     position: number; // Position in game. Dealer = 0, then next player = 1, etc.  This changes every round.
@@ -302,23 +247,24 @@ interface StrategyInput {
 
 type StrategyOutput = 'hit' | 'stay';
 
-function strategy ({ hand, otherHands, discardPile, position} : StrategyInput): StrategyOutput {
+function strategy ({ hand, playerName, otherHands, discardPile, position} : StrategyInput): StrategyOutput {
 
     // Forced Decision 1: If "allAlwaysHit" is true... keep hitting
     if (strategyConfig.allAlwaysHit) { return 'hit' };
 
-    // Forced Decision 2: If "allStayOnNumber" is not undefined, hit until that number is reached.
-    if (strategyConfig.allStayOnNumber) {
+    // Forced Decision 2: If "allStayOnTotal" is not undefined, return "stay" if >= number
+    if (strategyConfig.allStayOnTotal) {
+        if (sumArray(hand) >= strategyConfig.allStayOnTotal) { return 'stay' } else { return 'hit' };
+    }
+
+    // Forced Decision 3: If "allStayOnNumber" is not undefined, hit until that number is reached.
+    if (strategyConfig.allStayOnNumber !== undefined) {
+        console.log('handLength:', hand.length)
         if (hand.length === strategyConfig.allStayOnNumber) { return 'stay' } else { return 'hit' };
     }
 
+    // Strategy Decision 1: 
 
-
-    // What to pass into strategy?
-    // 1. Player Hand
-    // 2. All "Visible" Hands of other players
-    // 3. Player location the round, related to dealer
-    // 4. 
 
     // switch(player.name) {
     //     case 'Player 1':
@@ -364,7 +310,6 @@ function strategy ({ hand, otherHands, discardPile, position} : StrategyInput): 
 
     // Needs to return "hit" or "stay".
     return 'hit'
-
 }
 
 function createPlayers(numberOfPlayers: number) : Player[] {
