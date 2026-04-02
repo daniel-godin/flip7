@@ -7,6 +7,10 @@
     --color-primary-700: #1d4ed8;
     --color-primary-800: #1e40af;
 
+    --color-secondary-600: #8c1e11;
+    --color-secondary-700: #711a0e;
+    --color-secondary-800: #a32514;
+
     /* Neutral Colors - Text, borders, backgrounds */
     --color-neutral-50: #f9fafb;
     --color-neutral-100: #f3f4f6;
@@ -32,6 +36,8 @@
     /* Text */
     --color-text-primary: #111827;
     --color-text-secondary: #6b7280;
+
+    
 }
 
 * {

@@ -7,13 +7,24 @@ export interface GameConfig {
     winAt: number // Total score that allows a player to win
 }
 
+type PlayerStrategyConfig =
+  | { type: 'alwaysHit' }
+  | { type: 'stayAtCardCount'; threshold: number }
+  | { type: 'stayAtHandTotal'; threshold: number }
+
 export interface Player {
     busted: boolean;
     cards: string[];
     flip7wins: number;
+    id: string;
     name: string;
     score: number;
-    strategy: StrategyFn; // This needs to be something else..
+    // strategy: StrategyFn | null; // This needs to be something else..
+    strategy: {
+        type: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal' // Need to make this it's own type I guess
+        threshold?: number;
+        strategyFn?: StrategyFn;
+    }
     turnComplete: boolean;
     wins: number;
 }
