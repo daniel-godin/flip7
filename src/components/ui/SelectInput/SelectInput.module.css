@@ -1,0 +1,68 @@
+.selectInputContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.label {
+    color: white;
+    font-weight: 500;
+}
+
+.required {
+    color: red;
+    margin-left: 4px;
+}
+
+.inputContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    width: 100%;
+
+    color: white;
+}
+
+.selectInput {
+    flex: 1;
+
+    padding: 0.5rem;
+
+    border: 2px solid var(--color-neutral-400);
+    border-radius: 8px;
+
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+
+    /* Hopefully this solves the background/color of the dropdown */
+    color-scheme: dark;
+
+    cursor: pointer;
+}
+
+.selectInput:focus-within {
+    outline: none;
+    border: 2px solid var(--color-secondary-600);
+}
+
+.option {
+    cursor: pointer;
+    background-color: var(--color-neutral-200);
+    color: var(--color-text-primary);
+
+    color-scheme: dark;
+}
+
+.option:hover {
+    cursor: pointer;
+}
+
+.error {
+    border-color: red;
+}
+
+.errorMessage {
+    color: red;
+    font-size: 0.875rem;
+}
