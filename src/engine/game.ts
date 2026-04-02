@@ -1,10 +1,8 @@
-
 import { NUMBERS_ONLY_DECK } from "../constants/deck";
 import type { BustResults, GameConfig, Player, Results } from "../types/types";
 import { shuffle } from "../utilities/shuffle";
 import { sumArray } from "../utilities/sum";
-
-
+import { alwaysHit, type Decision, type DecisionInput } from "./strategies";
 
 interface SimulationConfig {
     gameConfig: GameConfig;
@@ -133,16 +131,14 @@ export function game({ deck, numberOfPlayers, winAt } : GameConfig) {
 
                 // Reshuffle Deck From Discard Pile if Deck is Empty.  Then clear Discard Pile.
                 if (shuffledDeck.length === 0) { shuffledDeck = shuffle([...discardPile]); discardPile.length = 0 };
-                    
-                // playerDecision is either "hit" or "stay" *before* drawing a card.
-                const playerDecision = strategy({ 
-                    // hand: player.cards, 
-                    player: player,
-                    otherHands: players.filter((p) => p.name !== player.name).map((pl) => pl.cards),
-                    discardPile: discardPile,
-                    position: players.findIndex((p) => p.name === player.name)
-                });
 
+                const decisionInput: DecisionInput = {
+                    hand: player.cards,
+                }
+
+                const playerDecision: Decision = player.strategy(decisionInput);
+                
+                // Honestly, do I even need a switch here, or would if if else work?  
                 switch (playerDecision) {
                     case 'stay': 
                         player.turnComplete = true;
@@ -225,93 +221,7 @@ export function game({ deck, numberOfPlayers, winAt } : GameConfig) {
     }
 }
 
-interface StrategyConfig {
-    allAlwaysHit: boolean; // Default should be false
-    allStayOnNumber?: number; // optional -- if hand.length === to this, stay.
-    allStayOnTotal?: number; // *optional* -- if hand is >= this number, stay.
-}
-
-const strategyConfig: StrategyConfig = {
-    allAlwaysHit: false,
-    // allStayOnNumber: 4,
-    allStayOnTotal: 30
-}
-
-interface StrategyInput {
-    hand: string[];
-    playerName: string;
-    otherHands: string[][];
-    discardPile: string[];
-    position: number; // Position in game. Dealer = 0, then next player = 1, etc.  This changes every round.
-}
-
-type StrategyOutput = 'hit' | 'stay';
-
-function strategy ({ hand, playerName, otherHands, discardPile, position} : StrategyInput): StrategyOutput {
-
-    // Forced Decision 1: If "allAlwaysHit" is true... keep hitting
-    if (strategyConfig.allAlwaysHit) { return 'hit' };
-
-    // Forced Decision 2: If "allStayOnTotal" is not undefined, return "stay" if >= number
-    if (strategyConfig.allStayOnTotal) {
-        if (sumArray(hand) >= strategyConfig.allStayOnTotal) { return 'stay' } else { return 'hit' };
-    }
-
-    // Forced Decision 3: If "allStayOnNumber" is not undefined, hit until that number is reached.
-    if (strategyConfig.allStayOnNumber !== undefined) {
-        console.log('handLength:', hand.length)
-        if (hand.length === strategyConfig.allStayOnNumber) { return 'stay' } else { return 'hit' };
-    }
-
-    // Strategy Decision 1: 
-
-
-    // switch(player.name) {
-    //     case 'Player 1':
-    //         // break;
-    //         if (player.cards.length === 2) {
-    //             player.turnComplete = true;
-    //             player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
-    //             return;
-    //         };
-    //         break;
-    //     case 'Player 2': 
-    //         break;
-    //         if (player.cards.length === 3) {
-    //             player.turnComplete = true;
-    //             player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
-    //             return;
-    //         };
-    //         break;
-    //     case 'Player 3': 
-    //         if (player.cards.length === 4) {
-    //             player.turnComplete = true;
-    //             player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
-    //             return;
-    //         };
-    //         break;
-    //     case 'Player 4': 
-    //         if (player.cards.length === 5) {
-    //             player.turnComplete = true;
-    //             player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
-    //             return;
-    //         };
-    //         break;
-    //     case 'Player 5': 
-    //         if (player.cards.length === 6) {
-    //             player.turnComplete = true;
-    //             player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
-    //             return;
-    //         };
-    //         break;
-    // }
-
-
-
-    // Needs to return "hit" or "stay".
-    return 'hit'
-}
-
+// TODO:  Move this into React side.
 function createPlayers(numberOfPlayers: number) : Player[] {
     const players: Player[] = [];
     for (let i = 0; i < numberOfPlayers; i++) {
@@ -321,6 +231,7 @@ function createPlayers(numberOfPlayers: number) : Player[] {
             flip7wins: 0,
             name: `Player ${i + 1}`,
             score: 0,
+            strategy: alwaysHit(),
             turnComplete: false,
             wins: 0
         })
