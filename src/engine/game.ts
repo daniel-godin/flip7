@@ -2,6 +2,9 @@
 import { NUMBERS_ONLY_DECK } from "../constants/deck";
 import type { BustResults, GameConfig, Player, Results } from "../types/types";
 import { shuffle } from "../utilities/shuffle";
+import { sumArray } from "../utilities/sum";
+
+
 
 interface SimulationConfig {
     gameConfig: GameConfig;
@@ -11,11 +14,10 @@ interface SimulationConfig {
 const simulationConfig: SimulationConfig = {
     gameConfig: {
         deck: NUMBERS_ONLY_DECK,
-        // hardStayAt: 4,  // For simulations that want a hard stay for every player
         numberOfPlayers: 5, // Flip7 says up to 18 players *per deck*, so add a deck if there are more than 18 players.
         winAt: 200 // Default for Flip7 is 200
     },
-    numberOfGames: 10_000,
+    numberOfGames: 1000
 }
 
 export function runSimulation() {
@@ -40,7 +42,6 @@ export function runSimulation() {
     for (let i = 0; i < simulationConfig.numberOfGames; i++) {
         let gameResult = game({
             deck: simulationConfig.gameConfig.deck,
-            hardStayAt: simulationConfig.gameConfig.hardStayAt,
             numberOfPlayers: simulationConfig.gameConfig.numberOfPlayers,
             winAt: simulationConfig.gameConfig.winAt
         });
@@ -97,7 +98,6 @@ export function runSimulation() {
     results.flip7Results.percentageChanceOverall = ((results.flip7Results.flip7wins / results.totalRounds) * 100).toFixed(2) + `%`;
     results.flip7Results.percentageChancePerPlayer = ((results.flip7Results.flip7wins / (results.totalRounds * simulationConfig.gameConfig.numberOfPlayers)) * 100).toFixed(2) + `%`;
 
-    console.log(`Number of games: `, simulationConfig.numberOfGames);
     console.table(results.playerResults);
     console.table(results.bustResults.bustByHandSize);
     console.table(results.bustResults.bustByCardNumber);
@@ -105,94 +105,145 @@ export function runSimulation() {
 
     const end = performance.now();
 
-    console.log(`Time to Perform Simulation: ${end - start} milliseconds`)
+    console.log(`Time to Perform Simulation: ${end - start} milliseconds for ${simulationConfig.numberOfGames} games.`)
 }
 
-// Maybe set up a return type for this...
-export function game({ deck, hardStayAt, numberOfPlayers, winAt } : GameConfig) {
-    // Rule 1: Use shuffledDeck until it runs out, then shuffle discardPile and make that into the new shuffledDeck
-    // Note: Does not include cards already in players hands.
+// TODO: Possibly build a return type for game()
+// Flip7 Game
+export function game({ deck, numberOfPlayers, winAt } : GameConfig) {
+    // Step 1:  Create Players, Deck, Discard Pile, Results Objects, and Round Counter.
+    let players = createPlayers(numberOfPlayers);
     let shuffledDeck: string[] = shuffle(deck);
     let discardPile: string[] = [];
-
-    const players: Player[] = [];
-    for (let i = 0; i < numberOfPlayers; i++) {
-        players.push({
-            busted: false,
-            cards: [],
-            flip7wins: 0,
-            name: `Player ${i + 1}`,
-            score: 0,
-            turnComplete: false,
-            wins: 0
-        })
-    }
-
-    const bustResults = createBustObject();
-
+    let bustResults = createBustObject();
     let roundsCounter: number = 0;
 
-    // Game: Winning Condition:  Any player has gameConfig.winAt score or above at the end of a round.
+    // Step 2:  Play Game Until a Player has a Score at/above winAt
     while (players.every((player) => player.score < winAt)) {
-
+        // Step 2a: Increment Rounds Counter
         roundsCounter++;
 
-        // Rounds:
+        // Step 2b: Play Round until all players have completed their turns
         while (players.some((player) => player.turnComplete === false)) {
 
 
-            // Loop through players:
+            // Step 2c:  Each Player Draws a Card -- This is where most logic for the game exists
             players.forEach((player) => {
                 if (player.turnComplete) { return }; // If player turnComplete (busted or staying), move to next player
 
-                // For simulations that want a hard stay for every player
-                if (hardStayAt && player.cards.length === hardStayAt) {
-                    player.turnComplete = true;
-                    player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
-                    return;
-                }
+                // Reshuffle Deck From Discard Pile if Deck is Empty.  Then clear Discard Pile.
+                if (shuffledDeck.length === 0) { shuffledDeck = shuffle([...discardPile]); discardPile.length = 0 };
+                    
+        
 
+                // This is where strategy comes in.
 
-                // Step 1: if shuffledDeck is empty, make a new shuffledDeck from the discardPile
-                if (shuffledDeck.length === 0) {
-                    shuffledDeck = shuffle([...discardPile]);
-                    discardPile.length = 0;
-                }
+                // What decisions does a player need to make?  (Hit or Stay)
+                // What data do they have available to them to make this decision?  (Their Hand, Other's Hands, Discard Pile, Stastistical Knowledge)
 
-                // Step 2: Draw the next card
-                const nextCard: string = shuffledDeck.shift()!;
+                // How can I pull this out into a "strategy" or "decision" function?
 
-                bustResults.bustByHandSize[player.cards.length + 1].drawn++;
+                const playerDecision = strategy({ 
+                    hand: player.cards, 
+                    otherHands: players.filter((p) => p.name !== player.name).map((pl) => pl.cards),
+                    discardPile: discardPile,
+                    position: players.findIndex((p) => p.name === player.name)
+                });
 
-                // Step 3: Determine if player has busted due to drawn card.
-                if (player.cards.includes(nextCard)) {
-                    player.busted = true;
-                    player.turnComplete = true;
-                    player.cards = [...player.cards, nextCard];
-
-                    bustResults.bustByHandSize[player.cards.length].busts++;
-                    bustResults.bustByCardNumber[Number(nextCard)]++;
-
-                    return; // Next Player
-                } else {
-                    // Flip7 has special rules regarding number of cards
-                    // If the user flips 7 cards without busting, they get a bonus and the round ends.
-                    // So, we don't need to go over 7 cards.
-                    player.cards.push(nextCard);
-
-                    if (player.cards.length === 7) {
-                        player.flip7wins++;
+                switch (playerDecision) {
+                    case 'stay': 
                         player.turnComplete = true;
-                        player.score += sumArray(player.cards);
-                        player.score += 15; // 15 Bonus Points for Getting a Flip7
+                        player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
+                        return;
+                        break;
+                    case 'hit':
+                        // Step 2: Draw the next card
+                        const nextCard: string = shuffledDeck.shift()!;
 
-                        // Probably need to loop through players array and make all player turns complete, or exit out of while loop
-                        for (let j = 0; j < players.length; j++) {
-                            players[j].turnComplete = true;
-                        }
+                        bustResults.bustByHandSize[player.cards.length + 1].drawn++;
+
+                        // Step 3: Determine if player has busted due to drawn card.
+                        if (player.cards.includes(nextCard)) {
+                            player.busted = true;
+                            player.turnComplete = true;
+                            player.cards = [...player.cards, nextCard];
+
+                            bustResults.bustByHandSize[player.cards.length].busts++;
+                            bustResults.bustByCardNumber[Number(nextCard)]++;
+
+                            return; // Next Player
+                        } else {
+                            // Flip7 has special rules regarding number of cards
+                            // If the user flips 7 cards without busting, they get a bonus and the round ends.
+                            // So, we don't need to go over 7 cards.
+                            player.cards.push(nextCard);
+
+                            if (player.cards.length === 7) {
+                                player.flip7wins++;
+                                player.turnComplete = true;
+                                player.score += sumArray(player.cards);
+                                player.score += 15; // 15 Bonus Points for Getting a Flip7
+
+                                // Probably need to loop through players array and make all player turns complete, or exit out of while loop
+                                for (let j = 0; j < players.length; j++) {
+                                    players[j].turnComplete = true;
+                                }
+                                
+                            }
+                        };
+                        break; 
+                }
+
+
+
+
+
+                // For simulations that want a hard stay for every player
+                // if (hardStayAt && player.cards.length === hardStayAt) {
+                //     player.turnComplete = true;
+                //     player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
+                //     return;
+                // }
+
+                
+
+
+
+
+                // // Step 2: Draw the next card
+                // const nextCard: string = shuffledDeck.shift()!;
+
+                // bustResults.bustByHandSize[player.cards.length + 1].drawn++;
+
+                // // Step 3: Determine if player has busted due to drawn card.
+                // if (player.cards.includes(nextCard)) {
+                //     player.busted = true;
+                //     player.turnComplete = true;
+                //     player.cards = [...player.cards, nextCard];
+
+                //     bustResults.bustByHandSize[player.cards.length].busts++;
+                //     bustResults.bustByCardNumber[Number(nextCard)]++;
+
+                //     return; // Next Player
+                // } else {
+                //     // Flip7 has special rules regarding number of cards
+                //     // If the user flips 7 cards without busting, they get a bonus and the round ends.
+                //     // So, we don't need to go over 7 cards.
+                //     player.cards.push(nextCard);
+
+                //     if (player.cards.length === 7) {
+                //         player.flip7wins++;
+                //         player.turnComplete = true;
+                //         player.score += sumArray(player.cards);
+                //         player.score += 15; // 15 Bonus Points for Getting a Flip7
+
+                //         // Probably need to loop through players array and make all player turns complete, or exit out of while loop
+                //         for (let j = 0; j < players.length; j++) {
+                //             players[j].turnComplete = true;
+                //         }
                         
-                    }
-                }  
+                //     }
+                // }  
             })
         };
 
@@ -232,6 +283,106 @@ export function game({ deck, hardStayAt, numberOfPlayers, winAt } : GameConfig) 
     }
 }
 
+interface StrategyConfig {
+    allAlwaysHit: boolean; // Default should be false
+    allStayOnNumber?: number; // optional
+}
+
+const strategyConfig: StrategyConfig = {
+    allAlwaysHit: true,
+    // allHitOnNumber: 4
+}
+
+interface StrategyInput {
+    hand: string[];
+    otherHands: string[][];
+    discardPile: string[];
+    position: number; // Position in game. Dealer = 0, then next player = 1, etc.  This changes every round.
+}
+
+type StrategyOutput = 'hit' | 'stay';
+
+function strategy ({ hand, otherHands, discardPile, position} : StrategyInput): StrategyOutput {
+
+    // Forced Decision 1: If "allAlwaysHit" is true... keep hitting
+    if (strategyConfig.allAlwaysHit) { return 'hit' };
+
+    // Forced Decision 2: If "allStayOnNumber" is not undefined, hit until that number is reached.
+    if (strategyConfig.allStayOnNumber) {
+        if (hand.length === strategyConfig.allStayOnNumber) { return 'stay' } else { return 'hit' };
+    }
+
+
+
+    // What to pass into strategy?
+    // 1. Player Hand
+    // 2. All "Visible" Hands of other players
+    // 3. Player location the round, related to dealer
+    // 4. 
+
+    // switch(player.name) {
+    //     case 'Player 1':
+    //         // break;
+    //         if (player.cards.length === 2) {
+    //             player.turnComplete = true;
+    //             player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
+    //             return;
+    //         };
+    //         break;
+    //     case 'Player 2': 
+    //         break;
+    //         if (player.cards.length === 3) {
+    //             player.turnComplete = true;
+    //             player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
+    //             return;
+    //         };
+    //         break;
+    //     case 'Player 3': 
+    //         if (player.cards.length === 4) {
+    //             player.turnComplete = true;
+    //             player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
+    //             return;
+    //         };
+    //         break;
+    //     case 'Player 4': 
+    //         if (player.cards.length === 5) {
+    //             player.turnComplete = true;
+    //             player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
+    //             return;
+    //         };
+    //         break;
+    //     case 'Player 5': 
+    //         if (player.cards.length === 6) {
+    //             player.turnComplete = true;
+    //             player.score += Number(player.cards.reduce((sum, card) => sum + Number(card), 0));
+    //             return;
+    //         };
+    //         break;
+    // }
+
+
+
+    // Needs to return "hit" or "stay".
+    return 'hit'
+
+}
+
+function createPlayers(numberOfPlayers: number) : Player[] {
+    const players: Player[] = [];
+    for (let i = 0; i < numberOfPlayers; i++) {
+        players.push({
+            busted: false,
+            cards: [],
+            flip7wins: 0,
+            name: `Player ${i + 1}`,
+            score: 0,
+            turnComplete: false,
+            wins: 0
+        })
+    };
+    return players;
+}
+
 function createBustObject(): BustResults {
     const bustResults: BustResults = {
         bustByCardNumber: {
@@ -263,29 +414,6 @@ function createBustObject(): BustResults {
     return bustResults;
 }
 
-function strategy (): 'hit' | 'stay' {
-    let decision: 'hit' | 'stay';
-
-    return 'hit';
-    // What to pass into strategy?
-    // 1. Player Hand
-    // 2. All "Visible" Hands of other players
-    // 3. Player location the round, related to dealer
-    // 4. 
-
-
-
-    // Needs to return "hit" or "stay".
-    return decision;
-}
-
-function sumArray(arr: string[]): number {
-    const numArr: number[] = [];
-
-    arr.forEach((element) => {
-        if (isNaN(Number(element))) { return }; // If NaN after Number(), it is "+2", "+10", "FREEZE", etc.
-        numArr.push(Number(element));
-    })
-
-    return numArr.reduce((sum, card) => sum + Number(card), 0);
-}
+// Need to figure out where to put these rules, and a way to "link" to them at the appropriate place in the code.
+    // Rule 1: Use shuffledDeck until it runs out, then shuffle discardPile and make that into the new shuffledDeck
+    // Note: Does not include cards already in players hands.
