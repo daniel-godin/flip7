@@ -1,0 +1,57 @@
+.textInputContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.label {
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+.required {
+    color: red;
+    margin-left: 4px;
+}
+
+.inputContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    width: 100%;
+
+    padding: 0.5rem;
+
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+
+    border: 2px solid var(--color-neutral-400);
+    border-radius: 8px;
+}
+
+.inputContainer:focus-within {
+    border: 2px solid var(--color-secondary-600);
+}
+
+.textInput {
+    flex: 1;
+
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--color-text-primary);
+}
+
+.textInput::placeholder {
+    font-style: italic;
+}
+
+.error {
+    border-color: red;
+}
+
+.errorMessage {
+    color: red;
+    font-size: 0.875rem;
+}
