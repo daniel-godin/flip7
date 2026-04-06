@@ -1,0 +1,51 @@
+.numberInputContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.label {
+    color: black;
+    font-weight: 500;
+}
+
+.required {
+    color: red;
+    margin-left: 4px;
+}
+
+.inputContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    width: 100%;
+
+    padding: 0.5rem;
+
+    color: var(--color-neutral-500);
+
+    border: 1px solid var(--color-neutral-300);
+    border-radius: 8px;
+}
+
+.inputContainer:focus-within {
+    border: 1px solid var(--color-primary-600);
+}
+
+.numberInput {
+    flex: 1;
+
+    border: none;
+    outline: none;
+    background: transparent;
+}
+
+.error {
+    border-color: red;
+}
+
+.errorMessage {
+    color: red;
+    font-size: 0.875rem;
+}
