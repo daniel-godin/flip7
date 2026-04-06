@@ -5,31 +5,47 @@ import type { Player } from './types/types';
 import { SelectInput } from './components/ui/SelectInput/SelectInput';
 import { TextInput } from './components/ui/TextInput/TextInput';
 import { alwaysHit, stayAtCardCount, stayAtHandTotal } from './engine/strategies';
+import { RadioInput } from './components/ui/RadioInput/RadioInput';
+
+interface PlayerFormInput {
+    id: string;
+    name: string;
+    strategy: {
+        type: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal';
+        threshold?: number;
+    }
+}
 
 interface FormData {
-    players: Player[];
+    players: PlayerFormInput[];
+    strategyMode: 'uniform' | 'individual'; // All players use the same strategy or each uses their own.
+    uniformStrategy: {
+        type: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal';
+        threshold?: number;
+    }
 }
 
 export function App() {
 
     const [formData, setFormData] = useState<FormData>(() => {
-        // Later, set up a localStorage thing.  Like in seahawk.
+        // TODO:  Later, set up a localStorage thing.  Like in seahawk.
 
         // Default FormData State
         return {
             players: [
                 {
-                    busted: false,
-                    cards: [],
-                    flip7wins: 0,
                     id: crypto.randomUUID(),
                     name: '',
-                    score: 0,
-                    strategy: null,
-                    turnComplete: false,
-                    wins: 0
-                }
-            ]
+                    strategy: {
+                        type: 'alwaysHit',
+                        threshold: undefined
+                    },
+                },
+            ],
+            strategyMode: 'uniform',
+            uniformStrategy: {
+                type: 'alwaysHit'
+            }
         }
     });
     const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -62,17 +78,14 @@ export function App() {
             if (targetCount > currentPlayers.length) {
                 const newPlayers = [];
                 for (let i = currentPlayers.length; i < targetCount; i++) {
-                    newPlayers.push({        
-                        busted: false,
-                        cards: [],
-                        flip7wins: 0,
+                    newPlayers.push({
                         id: crypto.randomUUID(),
                         name: '',
-                        score: 0,
-                        strategy: null,
-                        turnComplete: false,
-                        wins: 0
-                    });
+                        strategy: {
+                            type: 'alwaysHit',
+                            threshold: undefined
+                        }
+                    } as PlayerFormInput);
                 };
 
                 return {
@@ -97,35 +110,41 @@ export function App() {
         }))
     };
 
+    const handleStrategyModeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+
+        if (value !== "uniform" && value !== "individual") { return }; // Silent Guard
+
+        setFormData(prev => ({
+            ...prev,
+            strategyMode: value
+        }))
+    }
+
+    const handleUniformStrategyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+
+        if (value !== 'alwaysHit' && value !== "stayAtCardCount" && value !== "stayAtHandTotal") {
+            return; // Silent Verification/Guard
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            uniformStrategy: {
+                type: value
+            }
+        }))
+    }
+
     const handlePlayerStrategyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const { id, value } = e.target;
 
-        switch (value) {
-            case 'alwaysHit':
-                setFormData(prev => ({
-                    ...prev,
-                    players: prev.players.map(player =>
-                        player.id === id ? { ...player, strategy: alwaysHit() } : player
-                    )
-                }));
-                break;
-            case 'stayAtCardCount':
-                setFormData(prev => ({
-                    ...prev,
-                    players: prev.players.map(player =>
-                        player.id === id ? { ...player, strategy: stayAtCardCount(4) } : player
-                    )
-                }));
-                break;
-            case 'stayAtHandTotal':
-                setFormData(prev => ({
-                    ...prev,
-                    players: prev.players.map(player =>
-                        player.id === id ? { ...player, strategy: stayAtHandTotal(44) } : player
-                    )
-                }));
-                break;
-        }
+        setFormData(prev => ({
+            ...prev,
+            players: prev.players.map(player => 
+                player.id === id ? { ...player, type: value } : player
+            )
+        }))
     }
 
 
@@ -133,6 +152,9 @@ export function App() {
         e.preventDefault();
 
         setIsRunning(true);
+
+
+        // This is where we convert formData into the data the simulation needs.
 
 
         runSimulation();
@@ -158,6 +180,35 @@ export function App() {
                     }))}
                 />
 
+                <RadioInput
+                    disabled={isRunning}
+                    legend='Strategy Mode'
+                    name='strategyMode'
+                    options={[
+                        { label: 'Same Strategy For All Players (Uniform)', value: 'uniform' },
+                        { label: 'Configure Each Player Individually (Individual)', value: 'individual' }
+                    ]}
+                    onChange={handleStrategyModeChange}
+                    value={formData.strategyMode}
+                />
+
+                {formData.strategyMode === 'uniform' && (
+                    <SelectInput
+                        disabled={isRunning}
+                        // label='Player Strategy'
+                        // id={player.id}
+                        name='playerStrategy'
+                        onChange={handleUniformStrategyChange}
+                        required={false}
+                        value={formData.uniformStrategy?.type}
+                        options={[
+                            { label: 'Always Hit', value: 'alwaysHit' },
+                            { label: 'Stay At Card Count', value: 'stayAtCardCount' },
+                            { label: 'Stay At Hand Total', value: 'stayAtHandTotal' },
+                        ]}  
+                    />
+                )}
+
                 <fieldset className={styles.playersContainer}>
                     <legend className={styles.legend}>Players:</legend>
 
@@ -177,13 +228,13 @@ export function App() {
                                 />
 
                                 <SelectInput
-                                    disabled={isRunning}
+                                    disabled={isRunning || formData.strategyMode === 'uniform'}
                                     // label='Player Strategy'
                                     id={player.id}
                                     name='playerStrategy'
                                     onChange={handlePlayerStrategyChange}
                                     required={false}
-                                    value={String(player.strategy)} // I don't know what to do here.
+                                    value={player.strategy.type}
                                     options={[
                                         { label: 'Always Hit', value: 'alwaysHit' },
                                         { label: 'Stay At Card Count', value: 'stayAtCardCount' },
