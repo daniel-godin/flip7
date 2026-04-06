@@ -6,13 +6,14 @@ import { SelectInput } from './components/ui/SelectInput/SelectInput';
 import { TextInput } from './components/ui/TextInput/TextInput';
 import { alwaysHit, stayAtCardCount, stayAtHandTotal } from './engine/strategies';
 import { RadioInput } from './components/ui/RadioInput/RadioInput';
+import { NumberInput } from './components/ui/NumberInput/NumberInput';
 
 interface PlayerFormInput {
     id: string;
     name: string;
     strategy: {
         type: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal';
-        threshold?: number;
+        threshold: string;
     }
 }
 
@@ -21,7 +22,7 @@ interface FormData {
     strategyMode: 'uniform' | 'individual'; // All players use the same strategy or each uses their own.
     uniformStrategy: {
         type: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal';
-        threshold?: number;
+        threshold: string; // string for working with form input elements. Convert to number onSubmit
     }
 }
 
@@ -38,13 +39,14 @@ export function App() {
                     name: '',
                     strategy: {
                         type: 'alwaysHit',
-                        threshold: undefined
+                        threshold: ''
                     },
                 },
             ],
             strategyMode: 'uniform',
             uniformStrategy: {
-                type: 'alwaysHit'
+                type: 'alwaysHit',
+                threshold: '' 
             }
         }
     });
@@ -83,7 +85,7 @@ export function App() {
                         name: '',
                         strategy: {
                             type: 'alwaysHit',
-                            threshold: undefined
+                            threshold: ''
                         }
                     } as PlayerFormInput);
                 };
@@ -131,7 +133,20 @@ export function App() {
         setFormData(prev => ({
             ...prev,
             uniformStrategy: {
+                ...prev.uniformStrategy,
                 type: value
+            }
+        }))
+    }
+
+    const handleUniformStrategyNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+
+        setFormData(prev => ({
+            ...prev,
+            uniformStrategy: {
+                ...prev.uniformStrategy,
+                threshold: value
             }
         }))
     }
@@ -193,20 +208,31 @@ export function App() {
                 />
 
                 {formData.strategyMode === 'uniform' && (
-                    <SelectInput
-                        disabled={isRunning}
-                        // label='Player Strategy'
-                        // id={player.id}
-                        name='playerStrategy'
-                        onChange={handleUniformStrategyChange}
-                        required={false}
-                        value={formData.uniformStrategy?.type}
-                        options={[
-                            { label: 'Always Hit', value: 'alwaysHit' },
-                            { label: 'Stay At Card Count', value: 'stayAtCardCount' },
-                            { label: 'Stay At Hand Total', value: 'stayAtHandTotal' },
-                        ]}  
-                    />
+                    <>
+                        <SelectInput
+                            disabled={isRunning}
+                            // label='Player Strategy'
+                            // id={player.id}
+                            name='playerStrategy'
+                            onChange={handleUniformStrategyChange}
+                            required={false}
+                            value={formData.uniformStrategy?.type}
+                            options={[
+                                { label: 'Always Hit', value: 'alwaysHit' },
+                                { label: 'Stay At Card Count', value: 'stayAtCardCount' },
+                                { label: 'Stay At Hand Total', value: 'stayAtHandTotal' },
+                            ]}  
+                        />
+
+                        {(formData.uniformStrategy.type === "stayAtCardCount" || formData.uniformStrategy.type === 'stayAtHandTotal') && (
+                            <NumberInput
+                                name='uniformNumber'
+                                onChange={handleUniformStrategyNumberChange}
+                                value={String(formData.uniformStrategy.threshold)}
+
+                            />
+                        )}
+                    </>
                 )}
 
                 <fieldset className={styles.playersContainer}>
