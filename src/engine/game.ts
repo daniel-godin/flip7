@@ -5,19 +5,17 @@ import { alwaysHit, type Decision, type DecisionInput } from "./strategies";
 
 interface RunSimulationInput {
     deck: string[];
+    players: Player[];
     numberOfGames: number;
     numberOfPlayers: number;
-    strategy: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal';
-    threshold?: number;
     winAt: number; // Default for Flip7 is 200
 }
 
 export function runSimulation({
     deck,
+    players,
     numberOfGames,
     numberOfPlayers,
-    strategy,
-    threshold,
     winAt
 }: RunSimulationInput) {
     const start = performance.now(); // For performance measuring
@@ -28,11 +26,8 @@ export function runSimulation({
 
         let gameResult = runGame({ deck, numberOfPlayers, winAt });
             
-
-        // Add 1 to number of games ran
+        // Counters:
         results.numberOfGamesRan++;
-
-        // Add all rounds run per game into a total rounds run for all games.
         results.totalRounds += gameResult.roundsCounter;
 
         // Add bust results to results object
