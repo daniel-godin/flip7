@@ -18,25 +18,25 @@ const simulationConfig: SimulationConfig = {
     numberOfGames: 10_000
 }
 
-export function runSimulation() {
-    const start = performance.now();
+interface RunSimulationInput {
+    numberOfGames: number;
+    numberOfPlayers: number;
+    strategy: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal';
+    threshold?: number;
+    winAt: number; // Default for Flip7 is 200
+}
 
-    const results: Results = {
-        bustResults: {
-            bustByCardNumber: {},
-            bustByHandSize: {}
-        },
-        flip7Results: { 
-            flip7wins: 0, 
-            percentageChanceOverall: '', 
-            percentageChancePerPlayer: '' 
-        },
-        numberOfGamesRan: 0,
-        playerResults: {},
-        totalRounds: 0
-    }
+export function runSimulation({
+    numberOfGames,
+    numberOfPlayers,
+    strategy,
+    threshold,
+    winAt
+}: RunSimulationInput) {
+    const start = performance.now(); // For performance measuring
+    const results = createResultObject();
 
-
+    // Play numberOfGames, keeps track of results
     for (let i = 0; i < simulationConfig.numberOfGames; i++) {
         let gameResult = game({
             deck: simulationConfig.gameConfig.deck,
@@ -268,6 +268,23 @@ function createBustObject(): BustResults {
     }
 
     return bustResults;
+}
+
+function createResultObject() : Results {
+    return {
+        bustResults: {
+            bustByCardNumber: {},
+            bustByHandSize: {}
+        },
+        flip7Results: { 
+            flip7wins: 0, 
+            percentageChanceOverall: '', 
+            percentageChancePerPlayer: '' 
+        },
+        numberOfGamesRan: 0,
+        playerResults: {},
+        totalRounds: 0
+    }
 }
 
 // Need to figure out where to put these rules, and a way to "link" to them at the appropriate place in the code.

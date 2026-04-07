@@ -172,7 +172,13 @@ export function App() {
         // This is where we convert formData into the data the simulation needs.
 
 
-        runSimulation();
+        runSimulation({
+            numberOfGames: 10_000,
+            numberOfPlayers: formData.players.length,
+            strategy: formData.uniformStrategy.type,
+            threshold: Number(formData.uniformStrategy.threshold),
+            winAt: 200
+        });
 
         setIsRunning(false);
     }
