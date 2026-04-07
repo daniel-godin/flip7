@@ -19,6 +19,7 @@ const simulationConfig: SimulationConfig = {
 }
 
 interface RunSimulationInput {
+    deck: string[];
     numberOfGames: number;
     numberOfPlayers: number;
     strategy: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal';
@@ -27,6 +28,7 @@ interface RunSimulationInput {
 }
 
 export function runSimulation({
+    deck,
     numberOfGames,
     numberOfPlayers,
     strategy,
@@ -37,12 +39,16 @@ export function runSimulation({
     const results = createResultObject();
 
     // Play numberOfGames, keeps track of results
-    for (let i = 0; i < simulationConfig.numberOfGames; i++) {
-        let gameResult = game({
-            deck: simulationConfig.gameConfig.deck,
-            numberOfPlayers: simulationConfig.gameConfig.numberOfPlayers,
-            winAt: simulationConfig.gameConfig.winAt
-        });
+    // for (let i = 0; i < simulationConfig.numberOfGames; i++) {
+    for (let i = 0; i < numberOfGames; i++) {
+        // let gameResult = game({
+        //     deck: simulationConfig.gameConfig.deck,
+        //     numberOfPlayers: simulationConfig.gameConfig.numberOfPlayers,
+        //     winAt: simulationConfig.gameConfig.winAt
+        // });
+
+        let gameResult = game({ deck: deck, numberOfPlayers: numberOfPlayers, winAt: winAt });
+            
 
         // Add 1 to number of games ran
         results.numberOfGamesRan++;

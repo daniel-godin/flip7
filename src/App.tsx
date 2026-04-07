@@ -7,6 +7,7 @@ import { TextInput } from './components/ui/TextInput/TextInput';
 import { alwaysHit, stayAtCardCount, stayAtHandTotal } from './engine/strategies';
 import { RadioInput } from './components/ui/RadioInput/RadioInput';
 import { NumberInput } from './components/ui/NumberInput/NumberInput';
+import { NUMBERS_ONLY_DECK } from './constants/deck';
 
 interface PlayerFormInput {
     id: string;
@@ -23,7 +24,8 @@ interface FormData {
     uniformStrategy: {
         type: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal';
         threshold: string; // string for working with form input elements. Convert to number onSubmit
-    }
+    },
+    winAt: string; // Convert to number later.
 }
 
 export function App() {
@@ -47,7 +49,8 @@ export function App() {
             uniformStrategy: {
                 type: 'alwaysHit',
                 threshold: '' 
-            }
+            },
+            winAt: '200'
         }
     });
     const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -99,6 +102,13 @@ export function App() {
             // No Change Needed:
             return prev;
         })
+    }
+
+    const handleWinAtChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData(prev => ({
+            ...prev,
+            winAt: e.target.value
+        }))
     }
 
     const handlePlayerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,16 +178,13 @@ export function App() {
 
         setIsRunning(true);
 
-
-        // This is where we convert formData into the data the simulation needs.
-
-
         runSimulation({
+            deck: NUMBERS_ONLY_DECK,
             numberOfGames: 10_000,
             numberOfPlayers: formData.players.length,
             strategy: formData.uniformStrategy.type,
             threshold: Number(formData.uniformStrategy.threshold),
-            winAt: 200
+            winAt: Number(formData.winAt)
         });
 
         setIsRunning(false);
@@ -188,6 +195,7 @@ export function App() {
             <h1>Flip 7 Game / Simulation</h1>
 
             <form className={styles.gameOptionsForm} onSubmit={runGame}>
+                {/* 1. Select Number of Players */}
                 <SelectInput
                     disabled={isRunning}
                     label='Number of Players'
@@ -201,6 +209,15 @@ export function App() {
                     }))}
                 />
 
+                {/* 2. Select Winning Condition: Default 200 */}
+                <NumberInput
+                    label='Win At (default: 200)'
+                    name='winAt'
+                    onChange={handleWinAtChange}
+                    value={formData.winAt}
+                />
+
+                {/* 3. Choose Uniform Strategy or Individual Strategy (each player gets their own strategy) */}
                 <RadioInput
                     disabled={isRunning}
                     legend='Strategy Mode'
