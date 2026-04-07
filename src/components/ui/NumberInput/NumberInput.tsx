@@ -27,7 +27,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(({
     error,
     id, 
     label, 
-    max = 999,
+    max = 1_000_000_000, // Default max is 1 billion
     maxLength,
     name,
     onBlur,
