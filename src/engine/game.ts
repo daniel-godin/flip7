@@ -39,15 +39,9 @@ export function runSimulation({
     const results = createResultObject();
 
     // Play numberOfGames, keeps track of results
-    // for (let i = 0; i < simulationConfig.numberOfGames; i++) {
     for (let i = 0; i < numberOfGames; i++) {
-        // let gameResult = game({
-        //     deck: simulationConfig.gameConfig.deck,
-        //     numberOfPlayers: simulationConfig.gameConfig.numberOfPlayers,
-        //     winAt: simulationConfig.gameConfig.winAt
-        // });
 
-        let gameResult = game({ deck: deck, numberOfPlayers: numberOfPlayers, winAt: winAt });
+        let gameResult = game({ deck, numberOfPlayers, winAt });
             
 
         // Add 1 to number of games ran
@@ -100,7 +94,7 @@ export function runSimulation({
     });
 
     results.flip7Results.percentageChanceOverall = ((results.flip7Results.flip7wins / results.totalRounds) * 100).toFixed(2) + `%`;
-    results.flip7Results.percentageChancePerPlayer = ((results.flip7Results.flip7wins / (results.totalRounds * simulationConfig.gameConfig.numberOfPlayers)) * 100).toFixed(2) + `%`;
+    results.flip7Results.percentageChancePerPlayer = ((results.flip7Results.flip7wins / (results.totalRounds * numberOfPlayers)) * 100).toFixed(2) + `%`;
 
     console.table(results.playerResults);
     console.table(results.bustResults.bustByHandSize);
@@ -109,7 +103,7 @@ export function runSimulation({
 
     const end = performance.now();
 
-    console.log(`Time to Perform Simulation: ${end - start} milliseconds for ${simulationConfig.numberOfGames} games.`)
+    console.log(`Time to Perform Simulation: ${end - start} milliseconds for ${numberOfGames} games.`)
 }
 
 // TODO: Possibly build a return type for game()

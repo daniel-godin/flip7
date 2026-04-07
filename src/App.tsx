@@ -19,6 +19,7 @@ interface PlayerFormInput {
 }
 
 interface FormData {
+    numberOfGames: string; // Convert to number later.
     players: PlayerFormInput[];
     strategyMode: 'uniform' | 'individual'; // All players use the same strategy or each uses their own.
     uniformStrategy: {
@@ -35,6 +36,7 @@ export function App() {
 
         // Default FormData State
         return {
+            numberOfGames: "1000",
             players: [
                 {
                     id: crypto.randomUUID(),
@@ -58,6 +60,16 @@ export function App() {
     useEffect(() => {
         console.log('Form Data:', formData);
     }, [formData])
+
+    // Generic formData input handler
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }))
+    }
 
     const handleNumberOfPlayersChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const targetCount: number = Number(e.target.value);
@@ -102,13 +114,6 @@ export function App() {
             // No Change Needed:
             return prev;
         })
-    }
-
-    const handleWinAtChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData(prev => ({
-            ...prev,
-            winAt: e.target.value
-        }))
     }
 
     const handlePlayerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -180,7 +185,7 @@ export function App() {
 
         runSimulation({
             deck: NUMBERS_ONLY_DECK,
-            numberOfGames: 10_000,
+            numberOfGames: Number(formData.numberOfGames),
             numberOfPlayers: formData.players.length,
             strategy: formData.uniformStrategy.type,
             threshold: Number(formData.uniformStrategy.threshold),
@@ -195,7 +200,15 @@ export function App() {
             <h1>Flip 7 Game / Simulation</h1>
 
             <form className={styles.gameOptionsForm} onSubmit={runGame}>
-                {/* 1. Select Number of Players */}
+                {/* 1. Choose Number of Games For Simulation */}
+                <NumberInput
+                    label='Number of Games'
+                    name='numberOfGames'
+                    onChange={handleInputChange}
+                    value={formData.numberOfGames}
+                />
+
+                {/* 2. Select Number of Players */}
                 <SelectInput
                     disabled={isRunning}
                     label='Number of Players'
@@ -209,15 +222,15 @@ export function App() {
                     }))}
                 />
 
-                {/* 2. Select Winning Condition: Default 200 */}
+                {/* 3. Select Winning Condition: Default 200 */}
                 <NumberInput
                     label='Win At (default: 200)'
                     name='winAt'
-                    onChange={handleWinAtChange}
+                    onChange={handleInputChange}
                     value={formData.winAt}
                 />
 
-                {/* 3. Choose Uniform Strategy or Individual Strategy (each player gets their own strategy) */}
+                {/* 4. Choose Uniform Strategy or Individual Strategy (each player gets their own strategy) */}
                 <RadioInput
                     disabled={isRunning}
                     legend='Strategy Mode'
