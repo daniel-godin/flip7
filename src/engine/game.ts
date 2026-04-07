@@ -1,22 +1,7 @@
-import { NUMBERS_ONLY_DECK } from "../constants/deck";
 import type { BustResults, GameConfig, Player, Results } from "../types/types";
 import { shuffle } from "../utilities/shuffle";
 import { sumArray } from "../utilities/sum";
 import { alwaysHit, type Decision, type DecisionInput } from "./strategies";
-
-interface SimulationConfig {
-    gameConfig: GameConfig;
-    numberOfGames: number;
-}
-
-const simulationConfig: SimulationConfig = {
-    gameConfig: {
-        deck: NUMBERS_ONLY_DECK,
-        numberOfPlayers: 5, // Flip7 says up to 18 players *per deck*, so add a deck if there are more than 18 players.
-        winAt: 200 // Default for Flip7 is 200
-    },
-    numberOfGames: 10_000
-}
 
 interface RunSimulationInput {
     deck: string[];
