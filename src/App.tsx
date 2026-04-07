@@ -178,7 +178,7 @@ export function App() {
     }
 
 
-    const runGame = (e: React.SubmitEvent<HTMLFormElement>) => {
+    const handleRunSimulation = (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         setIsRunning(true);
@@ -199,7 +199,7 @@ export function App() {
         <div className={styles.app}>
             <h1>Flip 7 Game / Simulation</h1>
 
-            <form className={styles.gameOptionsForm} onSubmit={runGame}>
+            <form className={styles.gameOptionsForm} onSubmit={handleRunSimulation}>
                 {/* 1. Choose Number of Games For Simulation */}
                 <NumberInput
                     label='Number of Games'

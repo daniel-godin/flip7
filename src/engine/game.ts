@@ -26,7 +26,7 @@ export function runSimulation({
     // Play numberOfGames, keeps track of results
     for (let i = 0; i < numberOfGames; i++) {
 
-        let gameResult = game({ deck, numberOfPlayers, winAt });
+        let gameResult = runGame({ deck, numberOfPlayers, winAt });
             
 
         // Add 1 to number of games ran
@@ -93,7 +93,7 @@ export function runSimulation({
 
 // TODO: Possibly build a return type for game()
 // Flip7 Game
-export function game({ deck, numberOfPlayers, winAt } : GameConfig) {
+export function runGame({ deck, numberOfPlayers, winAt } : GameConfig) {
     // Step 1:  Create Players, Deck, Discard Pile, Results Objects, and Round Counter.
     let players = createPlayers(numberOfPlayers);
     let shuffledDeck: string[] = shuffle(deck);
