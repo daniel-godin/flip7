@@ -68,5 +68,6 @@ export interface Results {
     flip7Results: Flip7Results;
     numberOfGamesRan: number;
     playerResults: Record<string, PlayerResult>;
+    simulationTime: number; // Possibly string, convert to seconds or keep in milliseconds?
     totalRounds: number;
 }

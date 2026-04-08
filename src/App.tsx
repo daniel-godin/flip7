@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import styles from './App.module.css';
 import { runSimulation, type PlayerSetup } from './engine/game';
-import type { Player } from './types/types';
+import { type Results } from './types/types';
 import { SelectInput } from './components/ui/SelectInput/SelectInput';
 import { TextInput } from './components/ui/TextInput/TextInput';
 import { alwaysHit, stayAtCardCount, stayAtHandTotal, type StrategyFn } from './engine/strategies';
 import { RadioInput } from './components/ui/RadioInput/RadioInput';
 import { NumberInput } from './components/ui/NumberInput/NumberInput';
 import { NUMBERS_ONLY_DECK } from './constants/deck';
-import { alwaysHitSimulation } from './engine/alwaysHitSimulation';
 
 interface PlayerFormInput {
     id: string;
@@ -57,11 +56,12 @@ export function App() {
         }
     });
     const [isRunning, setIsRunning] = useState<boolean>(false);
+    const [results, setResults] = useState<Results | null>(null);
 
     // TODO: Delete this later. For testing only
-    // useEffect(() => {
-    //     console.log('Form Data:', formData);
-    // }, [formData])
+    useEffect(() => {
+        console.log('results:', results);
+    }, [results])
 
     // Generic formData input handler
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -236,12 +236,14 @@ export function App() {
                     throw new Error('Strategy mode error.')
                 }
 
-                runSimulation({
+                const simulationResults = runSimulation({
                     deck: NUMBERS_ONLY_DECK,
                     playersSetup: players,
                     numberOfGames: Number(formData.numberOfGames),
                     winAt: Number(formData.winAt)
                 });
+
+                setResults(simulationResults);
         } catch (error) {
             console.error('Error in handleRunSimulation', error);
         } finally {
@@ -383,6 +385,7 @@ export function App() {
             </div>
 
             <div className={styles.results}>
+                <h2>Results</h2>
 
             </div>
 

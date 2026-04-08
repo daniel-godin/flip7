@@ -1,8 +1,6 @@
 .app {
     display: grid;
     grid-template-columns: 1fr 3fr;
-    justify-content: center;
-    align-items: center;
     gap: 1rem;
 
     padding: 2rem 1rem;
@@ -31,4 +29,12 @@
     grid-template-columns: 1fr auto auto;
     align-items: center;
     gap: 0.25rem;
+}
+
+
+/* Results-Side: */
+.results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }

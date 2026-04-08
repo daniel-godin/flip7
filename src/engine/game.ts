@@ -21,7 +21,7 @@ export function runSimulation({
     playersSetup,
     numberOfGames,
     winAt
-}: RunSimulationInput) {
+}: RunSimulationInput) : Results {
     const start = performance.now(); // For performance measuring
     const results = createResultObject();
 
@@ -80,14 +80,18 @@ export function runSimulation({
     results.flip7Results.percentageChanceOverall = ((results.flip7Results.flip7wins / results.totalRounds) * 100).toFixed(2) + `%`;
     results.flip7Results.percentageChancePerPlayer = ((results.flip7Results.flip7wins / (results.totalRounds * playersSetup.length)) * 100).toFixed(2) + `%`;
 
-    console.table(results.playerResults);
-    console.table(results.bustResults.bustByHandSize);
-    console.table(results.bustResults.bustByCardNumber);
-    console.table(results.flip7Results);
+    // console.table(results.playerResults);
+    // console.table(results.bustResults.bustByHandSize);
+    // console.table(results.bustResults.bustByCardNumber);
+    // console.table(results.flip7Results);
 
     const end = performance.now();
 
+    results.simulationTime = (end - start);
+
     console.log(`Time to Perform Simulation: ${end - start} milliseconds for ${numberOfGames} games.`)
+
+    return results;
 }
 
 // TODO: Possibly build a return type for game()
