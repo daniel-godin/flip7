@@ -1,9 +1,10 @@
+import type { PlayerSetup } from "../engine/game";
 import type { StrategyFn } from "../engine/strategies";
 
 
 export interface GameConfig {
     deck: string[];
-    numberOfPlayers: number; // Later possibly a Player Type
+    playersSetup: PlayerSetup[];
     winAt: number // Total score that allows a player to win
 }
 
@@ -20,11 +21,13 @@ export interface Player {
     name: string;
     score: number;
     // strategy: StrategyFn | null; // This needs to be something else..
-    strategy: {
-        type: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal' // Need to make this it's own type I guess
-        threshold?: number;
-        strategyFn?: StrategyFn;
-    }
+    // strategy: {
+    //     type: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal' // Need to make this it's own type I guess
+    //     threshold?: number;
+    //     strategyFn?: StrategyFn;
+    // }
+    strategy: StrategyFn;
+    threshhold?: number;
     turnComplete: boolean;
     wins: number;
 }

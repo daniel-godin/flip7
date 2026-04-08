@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import styles from './App.module.css';
-import { runSimulation } from './engine/game';
+import { runSimulation, type PlayerSetup } from './engine/game';
 import type { Player } from './types/types';
 import { SelectInput } from './components/ui/SelectInput/SelectInput';
 import { TextInput } from './components/ui/TextInput/TextInput';
@@ -41,7 +41,7 @@ export function App() {
             players: [
                 {
                     id: crypto.randomUUID(),
-                    name: '',
+                    name: 'Player 1',
                     strategy: {
                         type: 'alwaysHit',
                         threshold: ''
@@ -58,9 +58,10 @@ export function App() {
     });
     const [isRunning, setIsRunning] = useState<boolean>(false);
 
-    useEffect(() => {
-        console.log('Form Data:', formData);
-    }, [formData])
+    // TODO: Delete this later. For testing only
+    // useEffect(() => {
+    //     console.log('Form Data:', formData);
+    // }, [formData])
 
     // Generic formData input handler
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,7 +99,7 @@ export function App() {
                 for (let i = currentPlayers.length; i < targetCount; i++) {
                     newPlayers.push({
                         id: crypto.randomUUID(),
-                        name: '',
+                        name: `Player ${i + 1}`,
                         strategy: {
                             type: 'alwaysHit',
                             threshold: ''
@@ -170,10 +171,39 @@ export function App() {
     const handlePlayerStrategyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const { id, value } = e.target;
 
+        if (value !== 'alwaysHit' && value !== 'stayAtCardCount' && value !== 'stayAtHandTotal') { return }; // Silent Guard
+
         setFormData(prev => ({
             ...prev,
             players: prev.players.map(player => 
-                player.id === id ? { ...player, type: value } : player
+                player.id === id 
+                ?   { 
+                        ...player,
+                        strategy: {
+                            ...player.strategy,
+                            type: value
+                        }
+                    } 
+                : player
+            )
+        }))
+    }
+
+    const handlePlayerStrategyThresholdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value } = e.target;
+
+        setFormData(prev => ({
+            ...prev,
+            players: prev.players.map(player => 
+                player.id === id 
+                    ?   { 
+                            ...player,
+                            strategy: {
+                                ...player.strategy,
+                                threshold: value
+                            }
+                        } 
+                    : player
             )
         }))
     }
@@ -183,48 +213,47 @@ export function App() {
         e.preventDefault();
 
         setIsRunning(true);
+        try {
+            // Convert Players to work with game/engine
+                let players: PlayerSetup[]
+                if (formData.strategyMode === 'uniform') {
+                    // Convert all formData.players to the strategy + threshold
+                    const tempPlayers: PlayerFormInput[] = formData.players.map((player: PlayerFormInput) => {
+                        return {
+                            id: player.id,
+                            name: player.name,
+                            strategy: {
+                                type: formData.uniformStrategy.type,
+                                threshold: formData.uniformStrategy.threshold
+                            }
+                        }
+                    })
 
-        let players: Player[]
-
-        if (formData.strategyMode === 'uniform') {
-            // Convert all formData.players to the strategy + threshold
-            const tempPlayers: PlayerFormInput[] = formData.players.map((player: PlayerFormInput) => {
-                return {
-                    id: player.id,
-                    name: player.name,
-                    strategy: {
-                        type: formData.uniformStrategy.type,
-                        threshold: formData.uniformStrategy.threshold
-                    }
+                    players = convertPlayers(tempPlayers);
+                } else if (formData.strategyMode === 'individual') {
+                    players = convertPlayers(formData.players);
+                } else {
+                    throw new Error('Strategy mode error.')
                 }
-            })
 
-            players = convertPlayers(tempPlayers);
-        } else if (formData.strategyMode === 'individual') {
-            players = convertPlayers(formData.players);
-        } else {
-            throw new Error('Strategy mode error.')
+                runSimulation({
+                    deck: NUMBERS_ONLY_DECK,
+                    playersSetup: players,
+                    numberOfGames: Number(formData.numberOfGames),
+                    winAt: Number(formData.winAt)
+                });
+        } catch (error) {
+            console.error('Error in handleRunSimulation', error);
+        } finally {
+            setIsRunning(false);
         }
-
-        // Convert FormDataPlayers into Simulation/Game Players
-        // const players = convertPlayers(formData.players);
-
-        runSimulation({
-            deck: NUMBERS_ONLY_DECK,
-            players: players,
-            numberOfGames: Number(formData.numberOfGames),
-            numberOfPlayers: formData.players.length,
-            winAt: Number(formData.winAt)
-        });
-
-        setIsRunning(false);
     }
 
     return (
         <div className={styles.app}>
             <h1>Flip 7 Game / Simulation</h1>
 
-            <form className={styles.gameOptionsForm} onSubmit={handleRunSimulation}>
+            <form className={styles.gameOptionsForm} onSubmit={handleRunSimulation} autoComplete='off'>
                 {/* 1. Choose Number of Games For Simulation */}
                 <NumberInput
                     label='Number of Games'
@@ -287,9 +316,10 @@ export function App() {
 
                         {(formData.uniformStrategy.type === "stayAtCardCount" || formData.uniformStrategy.type === 'stayAtHandTotal') && (
                             <NumberInput
+                                label='Stay At:'
                                 name='uniformNumber'
                                 onChange={handleUniformStrategyNumberChange}
-                                value={String(formData.uniformStrategy.threshold)}
+                                value={formData.uniformStrategy.threshold}
 
                             />
                         )}
@@ -311,7 +341,7 @@ export function App() {
                                     onChange={handlePlayerNameChange}
                                     placeholder={`Player ${index + 1}`}
                                     required={index < 1} // This adds a red *, indicating it is required. Clear UI/UX
-                                    value={player.name || `Player ${index + 1}`}
+                                    value={player.name}
                                 />
 
                                 <SelectInput
@@ -328,6 +358,18 @@ export function App() {
                                         { label: 'Stay At Hand Total', value: 'stayAtHandTotal' },
                                     ]}  
                                 />
+
+                                {/* Render a Number Input for strategies that have a stayAt */}
+                                {(player.strategy.type === 'stayAtCardCount' || player.strategy.type === 'stayAtHandTotal') && (
+                                    <NumberInput
+                                        // label='Stay At:'
+                                        id={player.id}
+                                        name='stayAt'
+                                        onChange={handlePlayerStrategyThresholdChange}
+                                        value={player.strategy.threshold}
+
+                                    />
+                                )}
                             </div>
                         )
                     })}
@@ -340,10 +382,9 @@ export function App() {
     )
 }
 
-function convertPlayers(playersInput: PlayerFormInput[]) : Player[] {
+function convertPlayers(playersInput: PlayerFormInput[]) : PlayerSetup[] {
 
-    // forEach or map()?  And why???
-    const players: Player[] = playersInput.map((player: PlayerFormInput) => {
+    const players: PlayerSetup[] = playersInput.map((player: PlayerFormInput) => {
         let strategy: StrategyFn;
         switch (player.strategy.type) {
             case 'alwaysHit': 
@@ -358,21 +399,9 @@ function convertPlayers(playersInput: PlayerFormInput[]) : Player[] {
         }
 
         return {
-            busted: false,
-            cards: [],
-            flip7wins: 0,
             id: player.id,
             name: player.name,
-            score: 0,
-            // strategy: StrategyFn | null; // This needs to be something else..
-            // strategy: {
-            //     type: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal' // Need to make this it's own type I guess
-            //     threshold?: number;
-            //     strategyFn?: StrategyFn;
-            // }
             strategy: strategy,
-            turnComplete: false,
-            wins: 0
         }
     })
 

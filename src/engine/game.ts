@@ -1,21 +1,25 @@
 import type { BustResults, GameConfig, Player, Results } from "../types/types";
 import { shuffle } from "../utilities/shuffle";
 import { sumArray } from "../utilities/sum";
-import { alwaysHit, type Decision, type DecisionInput } from "./strategies";
+import { alwaysHit, type Decision, type DecisionInput, type StrategyFn } from "./strategies";
+
+export interface PlayerSetup {
+    id: string;
+    name: string;
+    strategy: StrategyFn;
+}
 
 interface RunSimulationInput {
     deck: string[];
-    players: Player[];
+    playersSetup: PlayerSetup[];
     numberOfGames: number;
-    numberOfPlayers: number;
     winAt: number; // Default for Flip7 is 200
 }
 
 export function runSimulation({
     deck,
-    players,
+    playersSetup,
     numberOfGames,
-    numberOfPlayers,
     winAt
 }: RunSimulationInput) {
     const start = performance.now(); // For performance measuring
@@ -24,7 +28,7 @@ export function runSimulation({
     // Play numberOfGames, keeps track of results
     for (let i = 0; i < numberOfGames; i++) {
 
-        let gameResult = runGame({ deck, numberOfPlayers, winAt });
+        let gameResult = runGame({ deck, playersSetup, winAt });
             
         // Counters:
         results.numberOfGamesRan++;
@@ -74,7 +78,7 @@ export function runSimulation({
     });
 
     results.flip7Results.percentageChanceOverall = ((results.flip7Results.flip7wins / results.totalRounds) * 100).toFixed(2) + `%`;
-    results.flip7Results.percentageChancePerPlayer = ((results.flip7Results.flip7wins / (results.totalRounds * numberOfPlayers)) * 100).toFixed(2) + `%`;
+    results.flip7Results.percentageChancePerPlayer = ((results.flip7Results.flip7wins / (results.totalRounds * playersSetup.length)) * 100).toFixed(2) + `%`;
 
     console.table(results.playerResults);
     console.table(results.bustResults.bustByHandSize);
@@ -88,9 +92,9 @@ export function runSimulation({
 
 // TODO: Possibly build a return type for game()
 // Flip7 Game
-export function runGame({ deck, numberOfPlayers, winAt } : GameConfig) {
+export function runGame({ deck, playersSetup, winAt } : GameConfig) {
     // Step 1:  Create Players, Deck, Discard Pile, Results Objects, and Round Counter.
-    let players = createPlayers(numberOfPlayers);
+    let players = createPlayers(playersSetup);
     let shuffledDeck: string[] = shuffle(deck);
     let discardPile: string[] = [];
     let bustResults = createBustObject();
@@ -201,21 +205,20 @@ export function runGame({ deck, numberOfPlayers, winAt } : GameConfig) {
     }
 }
 
-// TODO:  Move this into React side.
-function createPlayers(numberOfPlayers: number) : Player[] {
-    const players: Player[] = [];
-    for (let i = 0; i < numberOfPlayers; i++) {
-        players.push({
+function createPlayers(playersSetup: PlayerSetup[]) : Player[] {
+    const players: Player[] = playersSetup.map((player) => {
+        return {
             busted: false,
             cards: [],
             flip7wins: 0,
-            name: `Player ${i + 1}`,
+            id: player.id,
+            name: player.name,
             score: 0,
-            strategy: alwaysHit(),
+            strategy: player.strategy,
             turnComplete: false,
             wins: 0
-        })
-    };
+        }
+    })
     return players;
 }
 
