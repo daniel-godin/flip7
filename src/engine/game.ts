@@ -77,19 +77,11 @@ export function runSimulation({
         results.bustResults.bustByHandSize[numKey].percentage = percentage;
     });
 
-    results.flip7Results.percentageChanceOverall = ((results.flip7Results.flip7wins / results.totalRounds) * 100).toFixed(2) + `%`;
-    results.flip7Results.percentageChancePerPlayer = ((results.flip7Results.flip7wins / (results.totalRounds * playersSetup.length)) * 100).toFixed(2) + `%`;
-
-    // console.table(results.playerResults);
-    // console.table(results.bustResults.bustByHandSize);
-    // console.table(results.bustResults.bustByCardNumber);
-    // console.table(results.flip7Results);
-
     const end = performance.now();
-
     results.simulationTime = (end - start);
 
-    console.log(`Time to Perform Simulation: ${end - start} milliseconds for ${numberOfGames} games.`)
+    results.flip7Results.percentageChanceOverall = ((results.flip7Results.flip7wins / results.totalRounds) * 100).toFixed(2) + `%`;
+    results.flip7Results.percentageChancePerPlayer = ((results.flip7Results.flip7wins / (results.totalRounds * playersSetup.length)) * 100).toFixed(2) + `%`;
 
     return results;
 }
