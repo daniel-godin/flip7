@@ -9,6 +9,7 @@ import { RadioInput } from './components/ui/RadioInput/RadioInput';
 import { NumberInput } from './components/ui/NumberInput/NumberInput';
 import { NUMBERS_ONLY_DECK } from './constants/deck';
 import { SimulationResults } from './components/features/SimulationResults/SimulationResults';
+import { LoadingSpinner } from './components/ui/LoadingSpinner/LoadingSpinner';
 
 interface PlayerFormInput {
     id: string;
@@ -237,18 +238,26 @@ export function App() {
                     throw new Error('Strategy mode error.')
                 }
 
-                const simulationResults = runSimulation({
-                    deck: NUMBERS_ONLY_DECK,
-                    playersSetup: players,
-                    numberOfGames: Number(formData.numberOfGames),
-                    winAt: Number(formData.winAt)
-                });
+                // setTimeout is needed to force a LoadingSpinner. Use web workers to fix this later
+                setTimeout(() => {
+                    const simulationResults = runSimulation({
+                        deck: NUMBERS_ONLY_DECK,
+                        playersSetup: players,
+                        numberOfGames: Number(formData.numberOfGames),
+                        winAt: Number(formData.winAt)
+                    });
 
-                setResults(simulationResults);
+                    setResults(simulationResults);
+                    setIsRunning(false);
+                }, 0)
+
+
+                
         } catch (error) {
             console.error('Error in handleRunSimulation', error);
-        } finally {
             setIsRunning(false);
+        } finally {
+            // setIsRunning(false);
         }
     }
 
@@ -386,8 +395,9 @@ export function App() {
             </div>
 
             <div className={styles.results}>
-                {!results && (<h2>Run Simulation To Get Results</h2>)}
-                {results && (<SimulationResults results={results} />) }
+                {isRunning && (<LoadingSpinner />)}
+                {!results && !isRunning && (<h2>Run Simulation To Get Results</h2>)}
+                {results && !isRunning && (<SimulationResults results={results} />) }
             </div>
 
         </div>
