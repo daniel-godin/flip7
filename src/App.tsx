@@ -4,10 +4,11 @@ import { runSimulation } from './engine/game';
 import type { Player } from './types/types';
 import { SelectInput } from './components/ui/SelectInput/SelectInput';
 import { TextInput } from './components/ui/TextInput/TextInput';
-import { alwaysHit, stayAtCardCount, stayAtHandTotal } from './engine/strategies';
+import { alwaysHit, stayAtCardCount, stayAtHandTotal, type StrategyFn } from './engine/strategies';
 import { RadioInput } from './components/ui/RadioInput/RadioInput';
 import { NumberInput } from './components/ui/NumberInput/NumberInput';
 import { NUMBERS_ONLY_DECK } from './constants/deck';
+import { alwaysHitSimulation } from './engine/alwaysHitSimulation';
 
 interface PlayerFormInput {
     id: string;
@@ -183,12 +184,36 @@ export function App() {
 
         setIsRunning(true);
 
+        let players: Player[]
+
+        if (formData.strategyMode === 'uniform') {
+            // Convert all formData.players to the strategy + threshold
+            const tempPlayers: PlayerFormInput[] = formData.players.map((player: PlayerFormInput) => {
+                return {
+                    id: player.id,
+                    name: player.name,
+                    strategy: {
+                        type: formData.uniformStrategy.type,
+                        threshold: formData.uniformStrategy.threshold
+                    }
+                }
+            })
+
+            players = convertPlayers(tempPlayers);
+        } else if (formData.strategyMode === 'individual') {
+            players = convertPlayers(formData.players);
+        } else {
+            throw new Error('Strategy mode error.')
+        }
+
+        // Convert FormDataPlayers into Simulation/Game Players
+        // const players = convertPlayers(formData.players);
+
         runSimulation({
             deck: NUMBERS_ONLY_DECK,
+            players: players,
             numberOfGames: Number(formData.numberOfGames),
             numberOfPlayers: formData.players.length,
-            strategy: formData.uniformStrategy.type,
-            threshold: Number(formData.uniformStrategy.threshold),
             winAt: Number(formData.winAt)
         });
 
@@ -313,4 +338,43 @@ export function App() {
 
         </div>
     )
+}
+
+function convertPlayers(playersInput: PlayerFormInput[]) : Player[] {
+
+    // forEach or map()?  And why???
+    const players: Player[] = playersInput.map((player: PlayerFormInput) => {
+        let strategy: StrategyFn;
+        switch (player.strategy.type) {
+            case 'alwaysHit': 
+                strategy = alwaysHit();
+                break;
+            case 'stayAtCardCount':
+                strategy = stayAtCardCount(Number(player.strategy.threshold));
+                break;
+            case 'stayAtHandTotal':
+                strategy = stayAtHandTotal(Number(player.strategy.threshold));
+                break;
+        }
+
+        return {
+            busted: false,
+            cards: [],
+            flip7wins: 0,
+            id: player.id,
+            name: player.name,
+            score: 0,
+            // strategy: StrategyFn | null; // This needs to be something else..
+            // strategy: {
+            //     type: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal' // Need to make this it's own type I guess
+            //     threshold?: number;
+            //     strategyFn?: StrategyFn;
+            // }
+            strategy: strategy,
+            turnComplete: false,
+            wins: 0
+        }
+    })
+
+    return players
 }
