@@ -33,6 +33,86 @@ export function SimulationResults({ results } : SimulationResultsProps) {
                 </div>
             </div>
 
+            {/* Player Results */}
+            <table className={styles.table}>
+                <thead>
+                    <tr>
+                        <th scope='col'>Player Name</th>
+                        <th scope='col'>Wins</th>
+                        <th scope='col'>Flip7's</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {Object.values(results.playerResults).map((player) => (
+                        <tr key={player.name}>
+                            <td>{player.name}</td>
+                            <td>{player.wins}</td>
+                            <td>{player.flip7wins}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+
+            {/* Flip 7 Results */}
+            <table className={styles.table}>
+                <thead>
+                    <tr>
+                        <th scope='col'>Flip 7 Wins (total)</th>
+                        <th scope='col'>Percent Chance (overall)</th>
+
+                        {/* Per game or per round??? */}
+                        <th scope='col'>Percent Chance (per player)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{results.flip7Results.flip7wins}</td>
+                        <td>{results.flip7Results.percentageChanceOverall}</td>
+                        <td>{results.flip7Results.percentageChancePerPlayer}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            {/* Busted Results -- By Hand Size */}
+            <table className={styles.table}>
+                <thead>
+                    <tr>
+                        <th scope='col'>Hand Size</th>
+                        <th scope='col'>Drawn</th>
+                        <th scope='col'>Busts</th>
+                        <th scope='col'>Bust %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {Object.entries(results.bustResults.bustByHandSize).map(([handSize, data]) => (
+                        <tr key={handSize}>
+                            <td>{handSize}</td>
+                            <td>{data.drawn.toLocaleString()}</td>
+                            <td>{data.busts.toLocaleString()}</td>
+                            <td>{data.percentage}%</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+
+            {/* Busted Results -- By Card Number */}
+            <table className={styles.table}>
+                <thead>
+                    <tr>
+                        <th scope='col'>Card Number</th>
+                        <th scope='col'>Times Caused Bust</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {Object.entries(results.bustResults.bustByCardNumber).map(([cardNumber, count]) => (
+                        <tr key={cardNumber}>
+                            <td>{cardNumber}</td>
+                            <td>{count.toLocaleString()}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+
 
         </div>
 
