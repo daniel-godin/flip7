@@ -251,132 +251,140 @@ export function App() {
 
     return (
         <div className={styles.app}>
-            <h1>Flip 7 Game / Simulation</h1>
+            <div className={styles.configPanel}>
+                <h1>Flip 7 Game / Simulation</h1>
 
-            <form className={styles.gameOptionsForm} onSubmit={handleRunSimulation} autoComplete='off'>
-                {/* 1. Choose Number of Games For Simulation */}
-                <NumberInput
-                    label='Number of Games'
-                    name='numberOfGames'
-                    onChange={handleInputChange}
-                    value={formData.numberOfGames}
-                />
+                <form className={styles.gameOptionsForm} onSubmit={handleRunSimulation} autoComplete='off'>
+                    {/* 1. Choose Number of Games For Simulation */}
+                    <NumberInput
+                        label='Number of Games'
+                        name='numberOfGames'
+                        onChange={handleInputChange}
+                        value={formData.numberOfGames}
+                    />
 
-                {/* 2. Select Number of Players */}
-                <SelectInput
-                    disabled={isRunning}
-                    label='Number of Players'
-                    name='numberOfPlayers'
-                    onChange={handleNumberOfPlayersChange}
-                    required={false}
-                    value={String(formData.players.length)}
-                    options={Array.from({ length: 18 }, (_, i) => ({
-                        label: String(i + 1),
-                        value: String(i + 1)
-                    }))}
-                />
+                    {/* 2. Select Number of Players */}
+                    <SelectInput
+                        disabled={isRunning}
+                        label='Number of Players'
+                        name='numberOfPlayers'
+                        onChange={handleNumberOfPlayersChange}
+                        required={false}
+                        value={String(formData.players.length)}
+                        options={Array.from({ length: 18 }, (_, i) => ({
+                            label: String(i + 1),
+                            value: String(i + 1)
+                        }))}
+                    />
 
-                {/* 3. Select Winning Condition: Default 200 */}
-                <NumberInput
-                    label='Win At (default: 200)'
-                    name='winAt'
-                    onChange={handleInputChange}
-                    value={formData.winAt}
-                />
+                    {/* 3. Select Winning Condition: Default 200 */}
+                    <NumberInput
+                        label='Win At (default: 200)'
+                        name='winAt'
+                        onChange={handleInputChange}
+                        value={formData.winAt}
+                    />
 
-                {/* 4. Choose Uniform Strategy or Individual Strategy (each player gets their own strategy) */}
-                <RadioInput
-                    disabled={isRunning}
-                    legend='Strategy Mode'
-                    name='strategyMode'
-                    options={[
-                        { label: 'Same Strategy For All Players (Uniform)', value: 'uniform' },
-                        { label: 'Configure Each Player Individually (Individual)', value: 'individual' }
-                    ]}
-                    onChange={handleStrategyModeChange}
-                    value={formData.strategyMode}
-                />
+                    {/* 4. Choose Uniform Strategy or Individual Strategy (each player gets their own strategy) */}
+                    <RadioInput
+                        disabled={isRunning}
+                        legend='Strategy Mode'
+                        name='strategyMode'
+                        options={[
+                            { label: 'Same Strategy For All Players (Uniform)', value: 'uniform' },
+                            { label: 'Configure Each Player Individually (Individual)', value: 'individual' }
+                        ]}
+                        onChange={handleStrategyModeChange}
+                        value={formData.strategyMode}
+                    />
 
-                {formData.strategyMode === 'uniform' && (
-                    <>
-                        <SelectInput
-                            disabled={isRunning}
-                            // label='Player Strategy'
-                            // id={player.id}
-                            name='playerStrategy'
-                            onChange={handleUniformStrategyChange}
-                            required={false}
-                            value={formData.uniformStrategy?.type}
-                            options={[
-                                { label: 'Always Hit', value: 'alwaysHit' },
-                                { label: 'Stay At Card Count', value: 'stayAtCardCount' },
-                                { label: 'Stay At Hand Total', value: 'stayAtHandTotal' },
-                            ]}  
-                        />
-
-                        {(formData.uniformStrategy.type === "stayAtCardCount" || formData.uniformStrategy.type === 'stayAtHandTotal') && (
-                            <NumberInput
-                                label='Stay At:'
-                                name='uniformNumber'
-                                onChange={handleUniformStrategyNumberChange}
-                                value={formData.uniformStrategy.threshold}
-
+                    {formData.strategyMode === 'uniform' && (
+                        <>
+                            <SelectInput
+                                disabled={isRunning}
+                                // label='Player Strategy'
+                                // id={player.id}
+                                name='playerStrategy'
+                                onChange={handleUniformStrategyChange}
+                                required={false}
+                                value={formData.uniformStrategy?.type}
+                                options={[
+                                    { label: 'Always Hit', value: 'alwaysHit' },
+                                    { label: 'Stay At Card Count', value: 'stayAtCardCount' },
+                                    { label: 'Stay At Hand Total', value: 'stayAtHandTotal' },
+                                ]}  
                             />
-                        )}
-                    </>
-                )}
 
-                <fieldset className={styles.playersContainer}>
-                    <legend className={styles.legend}>Players:</legend>
+                            {(formData.uniformStrategy.type === "stayAtCardCount" || formData.uniformStrategy.type === 'stayAtHandTotal') && (
+                                <NumberInput
+                                    label='Stay At:'
+                                    name='uniformNumber'
+                                    onChange={handleUniformStrategyNumberChange}
+                                    value={formData.uniformStrategy.threshold}
 
-                    {formData.players.map((player, index) => {
-
-                        return (
-                            <div key={player.id} className={styles.playerInputContainer}>
-                                <TextInput
-                                    disabled={isRunning}
-                                    id={player.id}
-                                    // label='Player Name'
-                                    name={player.id}
-                                    onChange={handlePlayerNameChange}
-                                    placeholder={`Player ${index + 1}`}
-                                    required={index < 1} // This adds a red *, indicating it is required. Clear UI/UX
-                                    value={player.name}
                                 />
+                            )}
+                        </>
+                    )}
 
-                                <SelectInput
-                                    disabled={isRunning || formData.strategyMode === 'uniform'}
-                                    // label='Player Strategy'
-                                    id={player.id}
-                                    name='playerStrategy'
-                                    onChange={handlePlayerStrategyChange}
-                                    required={false}
-                                    value={player.strategy.type}
-                                    options={[
-                                        { label: 'Always Hit', value: 'alwaysHit' },
-                                        { label: 'Stay At Card Count', value: 'stayAtCardCount' },
-                                        { label: 'Stay At Hand Total', value: 'stayAtHandTotal' },
-                                    ]}  
-                                />
+                    <fieldset className={styles.playersContainer}>
+                        <legend className={styles.legend}>Players:</legend>
 
-                                {/* Render a Number Input for strategies that have a stayAt */}
-                                {(player.strategy.type === 'stayAtCardCount' || player.strategy.type === 'stayAtHandTotal') && (
-                                    <NumberInput
-                                        // label='Stay At:'
+                        {formData.players.map((player, index) => {
+
+                            return (
+                                <div key={player.id} className={styles.playerInputContainer}>
+                                    <TextInput
+                                        disabled={isRunning}
                                         id={player.id}
-                                        name='stayAt'
-                                        onChange={handlePlayerStrategyThresholdChange}
-                                        value={player.strategy.threshold}
-
+                                        // label='Player Name'
+                                        name={player.id}
+                                        onChange={handlePlayerNameChange}
+                                        placeholder={`Player ${index + 1}`}
+                                        required={index < 1} // This adds a red *, indicating it is required. Clear UI/UX
+                                        value={player.name}
                                     />
-                                )}
-                            </div>
-                        )
-                    })}
-                </fieldset>
 
-                <button type='submit' disabled={isRunning}>Run Game</button>
-            </form>
+                                    <SelectInput
+                                        disabled={isRunning || formData.strategyMode === 'uniform'}
+                                        // label='Player Strategy'
+                                        id={player.id}
+                                        name='playerStrategy'
+                                        onChange={handlePlayerStrategyChange}
+                                        required={false}
+                                        value={player.strategy.type}
+                                        options={[
+                                            { label: 'Always Hit', value: 'alwaysHit' },
+                                            { label: 'Stay At Card Count', value: 'stayAtCardCount' },
+                                            { label: 'Stay At Hand Total', value: 'stayAtHandTotal' },
+                                        ]}  
+                                    />
+
+                                    {/* Render a Number Input for strategies that have a stayAt */}
+                                    {(player.strategy.type === 'stayAtCardCount' || player.strategy.type === 'stayAtHandTotal') && (
+                                        <NumberInput
+                                            // label='Stay At:'
+                                            id={player.id}
+                                            name='stayAt'
+                                            onChange={handlePlayerStrategyThresholdChange}
+                                            value={player.strategy.threshold}
+
+                                        />
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </fieldset>
+
+                    <button type='submit' disabled={isRunning}>Run Game</button>
+                </form>
+
+
+            </div>
+
+            <div className={styles.results}>
+
+            </div>
 
         </div>
     )
