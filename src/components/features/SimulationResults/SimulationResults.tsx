@@ -1,8 +1,16 @@
+import type { Results } from '../../../types/types';
 import styles from './SimulationResults.module.css';
 
-export function SimulationResults() {
+interface SimulationResultsProps {
+    results: Results;
+}
+
+export function SimulationResults({ results } : SimulationResultsProps) {
 
     return (
-        <>SimulationResults</>
+        <div className={styles.simulationResults}>
+            <h2>Simulation Results</h2>
+
+        </div>
     )
 }

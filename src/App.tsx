@@ -8,6 +8,7 @@ import { alwaysHit, stayAtCardCount, stayAtHandTotal, type StrategyFn } from './
 import { RadioInput } from './components/ui/RadioInput/RadioInput';
 import { NumberInput } from './components/ui/NumberInput/NumberInput';
 import { NUMBERS_ONLY_DECK } from './constants/deck';
+import { SimulationResults } from './components/features/SimulationResults/SimulationResults';
 
 interface PlayerFormInput {
     id: string;
@@ -385,8 +386,8 @@ export function App() {
             </div>
 
             <div className={styles.results}>
-                <h2>Results</h2>
-
+                {!results && (<h2>Run Simulation To Get Results</h2>)}
+                {results && (<SimulationResults results={results} />) }
             </div>
 
         </div>
