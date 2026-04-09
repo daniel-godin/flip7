@@ -46,8 +46,8 @@ export function SimulationResults({ results } : SimulationResultsProps) {
                     {Object.values(results.playerResults).map((player) => (
                         <tr key={player.name}>
                             <td>{player.name}</td>
-                            <td>{player.wins}</td>
-                            <td>{player.flip7wins}</td>
+                            <td>{player.wins.toLocaleString()}</td>
+                            <td>{player.flip7wins.toLocaleString()}</td>
                         </tr>
                     ))}
                 </tbody>

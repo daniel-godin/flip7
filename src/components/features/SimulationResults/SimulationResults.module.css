@@ -29,3 +29,23 @@
     border: black 1px solid;
     border-radius: 8px;
 }
+
+.table {
+    width: auto;
+    border-collapse: collapse;
+}
+
+.table > thead {
+    background-color: var(--color-neutral-300);
+    color: var(--color-neutral-700);
+}
+
+.row:hover {
+    background-color: var(--color-neutral-100);
+    cursor: pointer;
+}
+
+.table td {
+  border: 1px solid #ddd;
+  padding: 0.5rem 0.75rem;
+}

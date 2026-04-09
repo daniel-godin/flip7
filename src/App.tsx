@@ -7,7 +7,7 @@ import { TextInput } from './components/ui/TextInput/TextInput';
 import { alwaysHit, stayAtCardCount, stayAtHandTotal, type StrategyFn } from './engine/strategies';
 import { RadioInput } from './components/ui/RadioInput/RadioInput';
 import { NumberInput } from './components/ui/NumberInput/NumberInput';
-import { NUMBERS_ONLY_DECK } from './constants/deck';
+import { FULL_DECK, NUMBERS_ONLY_DECK } from './constants/deck';
 import { SimulationResults } from './components/features/SimulationResults/SimulationResults';
 import { LoadingSpinner } from './components/ui/LoadingSpinner/LoadingSpinner';
 
@@ -59,6 +59,9 @@ export function App() {
     });
     const [isRunning, setIsRunning] = useState<boolean>(false);
     const [results, setResults] = useState<Results | null>(null);
+
+    // console.log(NUMBERS_ONLY_DECK.length)
+    // console.log(FULL_DECK.length);
 
     // TODO: Delete this later. For testing only
     useEffect(() => {

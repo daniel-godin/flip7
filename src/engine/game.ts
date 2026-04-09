@@ -113,6 +113,7 @@ export function runGame({ deck, playersSetup, winAt } : GameConfig) {
                 if (shuffledDeck.length === 0) { shuffledDeck = shuffle([...discardPile]); discardPile.length = 0 };
 
                 const decisionInput: DecisionInput = {
+                    deck: shuffledDeck,
                     hand: player.cards,
                 }
 
