@@ -60,7 +60,7 @@ export function runSimulation({
         gameResult.players.forEach((player) => {
             // Update associated player in results.playerResults
             if (!results.playerResults[player.name]) {
-                results.playerResults[player.name] = { flip7wins: 0, name: player.name, wins: 0 }
+                results.playerResults[player.name] = { flip7wins: 0, name: player.name, strategy: String(player.strategy), wins: 0 }
             }
             results.playerResults[player.name].wins += player.wins;
             results.playerResults[player.name].flip7wins += player.flip7wins;

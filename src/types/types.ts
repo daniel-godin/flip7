@@ -59,6 +59,7 @@ export interface Flip7Results {
 export interface PlayerResult {
     flip7wins: number;
     name: string;
+    strategy: string;
     wins: number;
 }
 

@@ -38,16 +38,20 @@ export function SimulationResults({ results } : SimulationResultsProps) {
                 <thead>
                     <tr>
                         <th scope='col'>Player Name</th>
+                        <th scope='col'>Strategy</th>
                         <th scope='col'>Wins</th>
                         <th scope='col'>Flip7's</th>
+                        <th scope='col'>Win Percentage</th>
                     </tr>
                 </thead>
                 <tbody>
                     {Object.values(results.playerResults).map((player) => (
                         <tr key={player.name}>
                             <td>{player.name}</td>
+                            <td>{player.strategy}</td>
                             <td>{player.wins.toLocaleString()}</td>
                             <td>{player.flip7wins.toLocaleString()}</td>
+                            <td>{`${((player.wins / results.numberOfGamesRan) * 100)}%`}</td>
                         </tr>
                     ))}
                 </tbody>
