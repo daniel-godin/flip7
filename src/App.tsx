@@ -4,7 +4,7 @@ import { runSimulation, type PlayerSetup } from './engine/game';
 import { type Results } from './types/types';
 import { SelectInput } from './components/ui/SelectInput/SelectInput';
 import { TextInput } from './components/ui/TextInput/TextInput';
-import { alwaysHit, stayAtCardCount, stayAtHandTotal, type StrategyFn } from './engine/strategies';
+import { alwaysHit, cardCounting, stayAtCardCount, stayAtHandTotal, type StrategyFn } from './engine/strategies';
 import { RadioInput } from './components/ui/RadioInput/RadioInput';
 import { NumberInput } from './components/ui/NumberInput/NumberInput';
 import { FULL_DECK, NUMBERS_ONLY_DECK } from './constants/deck';
@@ -15,7 +15,7 @@ interface PlayerFormInput {
     id: string;
     name: string;
     strategy: {
-        type: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal';
+        type: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal' | 'cardCounting';
         threshold: string;
     }
 }
@@ -25,7 +25,7 @@ interface FormData {
     players: PlayerFormInput[];
     strategyMode: 'uniform' | 'individual'; // All players use the same strategy or each uses their own.
     uniformStrategy: {
-        type: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal';
+        type: 'alwaysHit' | 'stayAtCardCount' | 'stayAtHandTotal' | 'cardCounting';
         threshold: string; // string for working with form input elements. Convert to number onSubmit
     },
     winAt: string; // Convert to number later.
@@ -148,7 +148,7 @@ export function App() {
     const handleUniformStrategyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const value = e.target.value;
 
-        if (value !== 'alwaysHit' && value !== "stayAtCardCount" && value !== "stayAtHandTotal") {
+        if (value !== 'alwaysHit' && value !== "stayAtCardCount" && value !== "stayAtHandTotal" && value !== 'cardCounting') {
             return; // Silent Verification/Guard
         }
 
@@ -176,7 +176,7 @@ export function App() {
     const handlePlayerStrategyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const { id, value } = e.target;
 
-        if (value !== 'alwaysHit' && value !== 'stayAtCardCount' && value !== 'stayAtHandTotal') { return }; // Silent Guard
+        if (value !== 'alwaysHit' && value !== 'stayAtCardCount' && value !== 'stayAtHandTotal' && value !== 'cardCounting') { return }; // Silent Guard
 
         setFormData(prev => ({
             ...prev,
@@ -327,10 +327,11 @@ export function App() {
                                     { label: 'Always Hit', value: 'alwaysHit' },
                                     { label: 'Stay At Card Count', value: 'stayAtCardCount' },
                                     { label: 'Stay At Hand Total', value: 'stayAtHandTotal' },
+                                    { label: 'Card Counting', value: 'cardCounting' },
                                 ]}  
                             />
 
-                            {(formData.uniformStrategy.type === "stayAtCardCount" || formData.uniformStrategy.type === 'stayAtHandTotal') && (
+                            {(formData.uniformStrategy.type === "stayAtCardCount" || formData.uniformStrategy.type === 'stayAtHandTotal' || formData.uniformStrategy.type === 'cardCounting') && (
                                 <NumberInput
                                     label='Stay At:'
                                     name='uniformNumber'
@@ -372,11 +373,12 @@ export function App() {
                                             { label: 'Always Hit', value: 'alwaysHit' },
                                             { label: 'Stay At Card Count', value: 'stayAtCardCount' },
                                             { label: 'Stay At Hand Total', value: 'stayAtHandTotal' },
+                                            { label: 'Card Counting', value: 'cardCounting' },
                                         ]}  
                                     />
 
                                     {/* Render a Number Input for strategies that have a stayAt */}
-                                    {(player.strategy.type === 'stayAtCardCount' || player.strategy.type === 'stayAtHandTotal') && (
+                                    {(player.strategy.type === 'cardCounting' || player.strategy.type === 'stayAtCardCount' || player.strategy.type === 'stayAtHandTotal') && (
                                         <NumberInput
                                             // label='Stay At:'
                                             id={player.id}
@@ -420,6 +422,9 @@ function convertPlayers(playersInput: PlayerFormInput[]) : PlayerSetup[] {
                 break;
             case 'stayAtHandTotal':
                 strategy = stayAtHandTotal(Number(player.strategy.threshold));
+                break;
+            case 'cardCounting':
+                strategy = cardCounting(Number(player.strategy.threshold));
                 break;
         }
 
